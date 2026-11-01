@@ -145,7 +145,7 @@ def busqueda_lineal(codigos, dnis, nombres, grados, condiciones, tramites,
 
 def mostrar_solicitud(pos, codigos, fechas, dnis, nombres, telefonos,
                       niveles, grados, condiciones, tramites, estados,
-                      responsables):
+                      responsables, notas):
     print("--------------------------------------------")
     print("Codigo de solicitud:", codigos[pos])
     print("Fecha:", fechas[pos])
@@ -158,6 +158,8 @@ def mostrar_solicitud(pos, codigos, fechas, dnis, nombres, telefonos,
     print("Tipo de tramite:", tramites[pos])
     print("Estado:", estados[pos])
     print("Personal responsable:", responsables[pos])
+    if notas[pos] != "":
+        print("Nota de observacion:", notas[pos])
 
 
 def buscar_por_codigo(codigos, n, codigo):
@@ -317,6 +319,7 @@ def main():
     tramites = [""] * MAX_SOLICITUDES
     estados = [""] * MAX_SOLICITUDES
     responsables = [""] * MAX_SOLICITUDES
+    notas = [""] * MAX_SOLICITUDES
     claves = [""] * MAX_SOLICITUDES
     orden = [0] * MAX_SOLICITUDES
 
@@ -464,6 +467,7 @@ def main():
                 tramites[n] = tramite
                 estados[n] = "RECIBIDO"
                 responsables[n] = responsable
+                notas[n] = ""
                 n += 1
 
                 print("")
@@ -494,7 +498,7 @@ def main():
                     mostrar_solicitud(encontrados[i], codigos, fechas, dnis,
                                       nombres, telefonos, niveles, grados,
                                       condiciones, tramites, estados,
-                                      responsables)
+                                      responsables, notas)
 
         # ------------------------------------------------ 3. ORDENAR
         elif opcion == 3:
@@ -551,7 +555,7 @@ def main():
                     mostrar_solicitud(orden[i], codigos, fechas, dnis,
                                       nombres, telefonos, niveles, grados,
                                       condiciones, tramites, estados,
-                                      responsables)
+                                      responsables, notas)
 
         # ------------------------------------------------ 4. REPORTE
         elif opcion == 4:
@@ -568,7 +572,8 @@ def main():
                 for i in range(n):
                     mostrar_solicitud(i, codigos, fechas, dnis, nombres,
                                       telefonos, niveles, grados, condiciones,
-                                      tramites, estados, responsables)
+                                      tramites, estados, responsables,
+                                      notas)
 
         # ------------------------------------------------ 6. ESTADO
         elif opcion == 6:
@@ -601,7 +606,21 @@ def main():
                                 break
 
                         if eleccion != 0:
-                            estados[pos] = siguientes[eleccion - 1]
+                            nuevo = siguientes[eleccion - 1]
+
+                            # OBSERVADO y RECHAZADO exigen una nota
+                            if nuevo == "OBSERVADO" or nuevo == "RECHAZADO":
+                                while True:
+                                    if nuevo == "OBSERVADO":
+                                        nota = input("Nota de observacion: ")
+                                    else:
+                                        nota = input("Motivo del rechazo: ")
+                                    if len(nota.strip()) >= 5:
+                                        break
+                                    print("[!] Escriba al menos 5 caracteres.")
+                                notas[pos] = nota.strip()
+
+                            estados[pos] = nuevo
                             print("[OK]", codigos[pos], "ahora esta",
                                   estados[pos])
 

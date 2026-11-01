@@ -209,6 +209,35 @@ def reporte_tramite_estado(tramites, estados, n, cat_tramites, cat_estados):
     print("TOTAL GENERAL:", n)
 
 
+def reporte_documentos(codigos, fechas, condiciones, tramites, estados,
+                       notas, n, cat_tramites, cat_estados):
+    """Reporte de documentos: matriz tramite x estado y, debajo, el detalle
+    de cada documento agrupado por tipo de tramite."""
+    reporte_tramite_estado(tramites, estados, n, cat_tramites, cat_estados)
+
+    print("")
+    print("===== DETALLE DE DOCUMENTOS POR TRAMITE =====")
+    for i in range(len(cat_tramites)):
+        cantidad = 0
+        for k in range(n):
+            if tramites[k] == cat_tramites[i]:
+                cantidad += 1
+
+        print("")
+        print(cat_tramites[i] + " (" + str(cantidad) + ")")
+
+        if cantidad == 0:
+            print("   (sin documentos)")
+        else:
+            for k in range(n):
+                if tramites[k] == cat_tramites[i]:
+                    linea = ("   " + codigos[k] + " | " + fechas[k] + " | "
+                             + condiciones[k] + " | " + estados[k])
+                    if notas[k] != "":
+                        linea += " | Nota: " + notas[k]
+                    print(linea)
+
+
 # ------------------------------------------------------------- PROGRAMA
 def main():
     # Arreglos paralelos (Dimension ...[200])
@@ -269,7 +298,7 @@ def main():
         print("2. Buscar solicitud por codigo")
         print("3. Actualizar estado de una solicitud")
         print("4. Ordenar solicitudes por codigo")
-        print("5. Reporte por tramite y estado")
+        print("5. Reporte de documentos")
         print("6. Mostrar todas las solicitudes")
         print("0. Salir")
         opcion = leer_entero("Seleccione una opcion: ")
@@ -479,8 +508,8 @@ def main():
 
         # ------------------------------------------------ 5. REPORTE
         elif opcion == 5:
-            reporte_tramite_estado(tramites, estados, n, cat_tramites,
-                                   cat_estados)
+            reporte_documentos(codigos, fechas, condiciones, tramites,
+                               estados, notas, n, cat_tramites, cat_estados)
 
         # ------------------------------------------------ 6. LISTAR
         elif opcion == 6:

@@ -1,6 +1,8 @@
 from datetime import date
 
 MAX_SOLICITUDES = 200
+ARCHIVO = "solicitudes.csv"
+SEPARADOR = ";"
 
 
 # ------------------------------------------------------------------ ENTRADA
@@ -91,6 +93,39 @@ def iniciar_sesion(cat_codigos, cat_personal):
 
 
 # ------------------------------------------------------------ SUBPROCESOS
+def limpiar_campo(texto):
+    """Evita que el separador o un salto de linea rompan el archivo CSV."""
+    return texto.replace(SEPARADOR, ",").replace("\n", " ").replace("\r", " ")
+
+
+def guardar_archivo(columnas, n):
+    """Guarda las n solicitudes en el CSV (una linea por solicitud).
+    'columnas' es la lista de los 12 arreglos paralelos."""
+    with open(ARCHIVO, "w", encoding="utf-8") as archivo:
+        for i in range(n):
+            partes = []
+            for c in range(len(columnas)):
+                partes.append(limpiar_campo(columnas[c][i]))
+            archivo.write(SEPARADOR.join(partes) + "\n")
+
+
+def cargar_archivo(columnas):
+    """Lee el CSV al iniciar. Devuelve la cantidad de solicitudes cargadas
+    (0 si el archivo no existe)."""
+    n = 0
+    try:
+        with open(ARCHIVO, "r", encoding="utf-8") as archivo:
+            for linea in archivo:
+                partes = linea.rstrip("\n").split(SEPARADOR)
+                if len(partes) == len(columnas) and n < MAX_SOLICITUDES:
+                    for c in range(len(columnas)):
+                        columnas[c][n] = partes[c]
+                    n += 1
+    except FileNotFoundError:
+        pass
+    return n
+
+
 def mostrar_solicitud(pos, codigos, fechas, dnis, nombres, telefonos,
                       niveles, grados, condiciones, tramites, estados,
                       responsables, notas):
@@ -286,6 +321,10 @@ def main():
     notas = [""] * MAX_SOLICITUDES
     orden = [0] * MAX_SOLICITUDES
 
+    # Todas las columnas juntas, en el orden en que se guardan en el CSV
+    columnas = [codigos, fechas, dnis, nombres, telefonos, condiciones,
+                niveles, grados, tramites, estados, responsables, notas]
+
     cat_niveles = ["INICIAL", "PRIMARIA", "SECUNDARIA"]
     cat_condiciones = ["ESTUDIANTE", "EGRESADO"]
     cat_codigos_acceso = ["SEC-01", "SEC-02"]
@@ -316,7 +355,9 @@ def main():
         print("Acceso denegado. Se cierra el sistema.")
         return
 
-    n = 0
+    n = cargar_archivo(columnas)
+    if n > 0:
+        print("Se recuperaron", n, "solicitudes desde", ARCHIVO)
     opcion = -1
 
     while True:
@@ -389,7 +430,11 @@ def main():
                         break
                 nivel = cat_niveles[criterio - 1]
 
-                grado = input("Grado o edad: ")
+                while True:
+                    grado = input("Grado o edad: ").strip()
+                    if grado != "":
+                        break
+                    print("[!] Este dato no puede estar vacio.")
                 print("")
                 print("CONDICION DEL SOLICITANTE")
                 for i in range(2):
@@ -433,6 +478,7 @@ def main():
                 responsables[n] = responsable
                 notas[n] = ""
                 n += 1
+                guardar_archivo(columnas, n)
 
                 print("")
                 print("[OK] Solicitud registrada correctamente.")
@@ -505,6 +551,7 @@ def main():
                                 notas[pos] = nota.strip()
 
                             estados[pos] = nuevo
+                            guardar_archivo(columnas, n)
                             print("[OK]", codigos[pos], "ahora esta",
                                   estados[pos])
 

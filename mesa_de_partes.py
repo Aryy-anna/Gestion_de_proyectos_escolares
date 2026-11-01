@@ -238,6 +238,37 @@ def reporte_documentos(codigos, fechas, condiciones, tramites, estados,
                     print(linea)
 
 
+def indice_ingresos(codigos, fechas, tramites, estados, n):
+    """Indice de ingresos: lista numerada en orden de llegada y conteo de
+    ingresos por fecha."""
+    print("")
+    print("===== INDICE DE INGRESOS =====")
+    print("N. | CODIGO | FECHA | TRAMITE | ESTADO")
+    for i in range(n):
+        print(str(i + 1) + " | " + codigos[i] + " | " + fechas[i] + " | "
+              + tramites[i] + " | " + estados[i])
+
+    # Conteo por fecha con dos arreglos paralelos (fecha, cantidad)
+    fechas_unicas = []
+    cantidades = []
+    for i in range(n):
+        pos = -1
+        for j in range(len(fechas_unicas)):
+            if fechas_unicas[j] == fechas[i]:
+                pos = j
+        if pos == -1:
+            fechas_unicas.append(fechas[i])
+            cantidades.append(1)
+        else:
+            cantidades[pos] += 1
+
+    print("")
+    print("INGRESOS POR FECHA")
+    for j in range(len(fechas_unicas)):
+        print(fechas_unicas[j] + ": " + str(cantidades[j]) + " solicitud(es)")
+    print("TOTAL DE INGRESOS:", n)
+
+
 # ------------------------------------------------------------- PROGRAMA
 def main():
     # Arreglos paralelos (Dimension ...[200])
@@ -299,7 +330,8 @@ def main():
         print("3. Actualizar estado de una solicitud")
         print("4. Ordenar solicitudes por codigo")
         print("5. Reporte de documentos")
-        print("6. Mostrar todas las solicitudes")
+        print("6. Indice de ingresos")
+        print("7. Mostrar todas las solicitudes")
         print("0. Salir")
         opcion = leer_entero("Seleccione una opcion: ")
 
@@ -511,8 +543,15 @@ def main():
             reporte_documentos(codigos, fechas, condiciones, tramites,
                                estados, notas, n, cat_tramites, cat_estados)
 
-        # ------------------------------------------------ 6. LISTAR
+        # ------------------------------------------------ 6. INDICE
         elif opcion == 6:
+            if n == 0:
+                print("No hay ingresos registrados.")
+            else:
+                indice_ingresos(codigos, fechas, tramites, estados, n)
+
+        # ------------------------------------------------ 7. LISTAR
+        elif opcion == 7:
             if n == 0:
                 print("No hay solicitudes registradas.")
             else:

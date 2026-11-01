@@ -160,6 +160,32 @@ def mostrar_solicitud(pos, codigos, fechas, dnis, nombres, telefonos,
     print("Personal responsable:", responsables[pos])
 
 
+def buscar_por_codigo(codigos, n, codigo):
+    """Busqueda secuencial exacta (sin distinguir mayusculas).
+    Devuelve (posicion o -1, comparaciones)."""
+    comparaciones = 0
+    buscado = codigo.strip().upper()
+    for i in range(n):
+        comparaciones += 1
+        if codigos[i] == buscado:
+            return i, comparaciones
+    return -1, comparaciones
+
+
+def estados_siguientes(estado_actual, cat_estados, permitido):
+    """Lista los estados a los que se puede pasar desde el estado actual
+    segun la matriz de transiciones permitido[actual][nuevo]."""
+    fila = 0
+    for i in range(len(cat_estados)):
+        if cat_estados[i] == estado_actual:
+            fila = i
+    siguientes = []
+    for j in range(len(cat_estados)):
+        if permitido[fila][j]:
+            siguientes.append(cat_estados[j])
+    return siguientes
+
+
 def armar_claves(claves, n, criterio, codigos, fechas, nombres, niveles,
                  tramites):
     for i in range(n):
@@ -242,29 +268,33 @@ def ordenar_insercion(orden, claves, n, ascendente):
 
 
 def reporte_tramite_estado(tramites, estados, n, cat_tramites, cat_estados):
-    # matriz[6][4] inicializada en 0
-    matriz = [[0] * 4 for _ in range(6)]
+    ne = len(cat_estados)
+    nt = len(cat_tramites)
+    matriz = [[0] * ne for _ in range(nt)]
 
     for k in range(n):
-        fila = 5  # "OTROS" por defecto (ultima fila)
+        fila = nt - 1  # "OTROS" por defecto (ultima fila)
 
-        for i in range(6):
+        for i in range(nt):
             if cat_tramites[i] == tramites[k]:
                 fila = i
 
-        for j in range(4):
+        for j in range(ne):
             if cat_estados[j] == estados[k]:
                 matriz[fila][j] += 1
 
     print("")
     print("===== REPORTE POR TRAMITE Y ESTADO =====")
-    print("TRAMITE | RECIBIDO | EN REVISION | OBSERVADO | ATENDIDO | TOTAL")
+    encabezado = "TRAMITE"
+    for j in range(ne):
+        encabezado += " | " + cat_estados[j]
+    print(encabezado + " | TOTAL")
 
-    for i in range(6):
+    for i in range(nt):
         suma_fila = 0
         print(cat_tramites[i], end="")
 
-        for j in range(4):
+        for j in range(ne):
             print(" | " + str(matriz[i][j]), end="")
             suma_fila += matriz[i][j]
 
@@ -303,7 +333,16 @@ def main():
         "ACTUALIZACION DE DATOS",
         "OTROS",
     ]
-    cat_estados = ["RECIBIDO", "EN REVISION", "OBSERVADO", "ATENDIDO"]
+    cat_estados = ["RECIBIDO", "EN REVISION", "OBSERVADO", "APROBADO",
+                   "RECHAZADO", "ATENDIDO"]
+    # permitido[actual][nuevo] = 1 si el cambio de estado es valido
+    #                RECIB REVIS OBSER APROB RECHA ATEND
+    permitido = [[0, 1, 0, 0, 0, 0],   # RECIBIDO    -> EN REVISION
+                 [0, 0, 1, 1, 1, 0],   # EN REVISION -> OBSERVADO/APROBADO/RECHAZADO
+                 [0, 1, 0, 0, 1, 0],   # OBSERVADO   -> EN REVISION/RECHAZADO
+                 [0, 0, 0, 0, 0, 1],   # APROBADO    -> ATENDIDO
+                 [0, 0, 0, 0, 0, 0],   # RECHAZADO   (final)
+                 [0, 0, 0, 0, 0, 0]]   # ATENDIDO    (final)
 
     # Primero el acceso por codigo (reemplaza escribir el nombre)
     usuario = iniciar_sesion(cat_codigos_acceso, cat_personal)
@@ -325,6 +364,7 @@ def main():
         print("3. Ordenar solicitudes")
         print("4. Reporte por tramite y estado")
         print("5. Mostrar todas las solicitudes")
+        print("6. Actualizar estado de una solicitud")
         print("0. Salir")
         opcion = leer_entero("Seleccione una opcion: ")
 
@@ -529,6 +569,41 @@ def main():
                     mostrar_solicitud(i, codigos, fechas, dnis, nombres,
                                       telefonos, niveles, grados, condiciones,
                                       tramites, estados, responsables)
+
+        # ------------------------------------------------ 6. ESTADO
+        elif opcion == 6:
+            if n == 0:
+                print("No hay solicitudes registradas.")
+            else:
+                print("")
+                print("===== ACTUALIZAR ESTADO =====")
+                codigo = input("Codigo de la solicitud (ej. SOL-001): ")
+                pos, comparaciones = buscar_por_codigo(codigos, n, codigo)
+
+                if pos == -1:
+                    print("[!] No existe la solicitud", codigo.upper())
+                else:
+                    print("Estado actual:", estados[pos])
+                    siguientes = estados_siguientes(estados[pos],
+                                                    cat_estados, permitido)
+                    if len(siguientes) == 0:
+                        print("[!] La solicitud ya esta cerrada ("
+                              + estados[pos] + "); no admite cambios.")
+                    else:
+                        print("Puede pasar a:")
+                        for i in range(len(siguientes)):
+                            print(str(i + 1) + ". " + siguientes[i])
+                        print("0. Cancelar")
+
+                        while True:
+                            eleccion = leer_entero("Seleccione nuevo estado: ")
+                            if 0 <= eleccion <= len(siguientes):
+                                break
+
+                        if eleccion != 0:
+                            estados[pos] = siguientes[eleccion - 1]
+                            print("[OK]", codigos[pos], "ahora esta",
+                                  estados[pos])
 
         # ------------------------------------------------ 0. SALIR
         elif opcion == 0:

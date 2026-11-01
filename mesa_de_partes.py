@@ -75,7 +75,7 @@ def contiene_texto(texto, buscado):
 
 
 # ------------------------------------------------------------ SUBPROCESOS
-def busqueda_lineal(codigos, dnis, nombres, grados, secciones, tramites,
+def busqueda_lineal(codigos, dnis, nombres, grados, condiciones, tramites,
                     n, buscado):
     """Devuelve (encontrados, total, comparaciones)."""
     encontrados = [0] * MAX_SOLICITUDES
@@ -96,7 +96,7 @@ def busqueda_lineal(codigos, dnis, nombres, grados, secciones, tramites,
             elif k == 4:
                 campo = grados[i]
             elif k == 5:
-                campo = secciones[i]
+                campo = condiciones[i]
             else:
                 campo = tramites[i]
 
@@ -112,7 +112,7 @@ def busqueda_lineal(codigos, dnis, nombres, grados, secciones, tramites,
 
 
 def mostrar_solicitud(pos, codigos, fechas, dnis, nombres, telefonos,
-                      niveles, grados, secciones, tramites, estados,
+                      niveles, grados, condiciones, tramites, estados,
                       responsables):
     print("--------------------------------------------")
     print("Codigo de solicitud:", codigos[pos])
@@ -122,7 +122,7 @@ def mostrar_solicitud(pos, codigos, fechas, dnis, nombres, telefonos,
     print("Telefono de contacto:", telefonos[pos])
     print("Nivel educativo:", niveles[pos])
     print("Grado o edad:", grados[pos])
-    print("Seccion:", secciones[pos])
+    print("Condicion:", condiciones[pos])
     print("Tipo de tramite:", tramites[pos])
     print("Estado:", estados[pos])
     print("Personal responsable:", responsables[pos])
@@ -251,7 +251,7 @@ def main():
     telefonos = [""] * MAX_SOLICITUDES
     niveles = [""] * MAX_SOLICITUDES
     grados = [""] * MAX_SOLICITUDES
-    secciones = [""] * MAX_SOLICITUDES
+    condiciones = [""] * MAX_SOLICITUDES
     tramites = [""] * MAX_SOLICITUDES
     estados = [""] * MAX_SOLICITUDES
     responsables = [""] * MAX_SOLICITUDES
@@ -259,6 +259,7 @@ def main():
     orden = [0] * MAX_SOLICITUDES
 
     cat_niveles = ["INICIAL", "PRIMARIA", "SECUNDARIA"]
+    cat_condiciones = ["ESTUDIANTE", "EGRESADO"]
     cat_tramites = [
         "CONSTANCIA DE ESTUDIOS",
         "CERTIFICADO DE ESTUDIOS",
@@ -341,7 +342,17 @@ def main():
                 nivel = cat_niveles[criterio - 1]
 
                 grado = input("Grado o edad: ")
-                seccion = input("Seccion (si corresponde): ")
+                print("")
+                print("CONDICION DEL SOLICITANTE")
+                for i in range(2):
+                    print(str(i + 1) + ". " + cat_condiciones[i])
+
+                while True:
+                    criterio = leer_entero("Seleccione condicion (1-2): ")
+                    if 1 <= criterio <= 2:
+                        break
+                condicion = cat_condiciones[criterio - 1]
+
 
                 # Tramite
                 print("")
@@ -368,7 +379,7 @@ def main():
                 telefonos[n] = tel
                 niveles[n] = nivel
                 grados[n] = grado
-                secciones[n] = seccion
+                condiciones[n] = condicion
                 tramites[n] = tramite
                 estados[n] = "RECIBIDO"
                 responsables[n] = responsable
@@ -386,11 +397,11 @@ def main():
             else:
                 print("")
                 print("===== BUSQUEDA DE SOLICITUDES =====")
-                print("Ingrese codigo, DNI, nombre, grado, seccion o tramite:")
+                print("Ingrese codigo, DNI, nombre, grado, condicion o tramite:")
                 buscado = input()
 
                 encontrados, total, comparaciones = busqueda_lineal(
-                    codigos, dnis, nombres, grados, secciones, tramites,
+                    codigos, dnis, nombres, grados, condiciones, tramites,
                     n, buscado)
 
                 print("Coincidencias encontradas:", total)
@@ -399,7 +410,7 @@ def main():
                 for i in range(total):
                     mostrar_solicitud(encontrados[i], codigos, fechas, dnis,
                                       nombres, telefonos, niveles, grados,
-                                      secciones, tramites, estados,
+                                      condiciones, tramites, estados,
                                       responsables)
 
         # ------------------------------------------------ 3. ORDENAR
@@ -456,7 +467,7 @@ def main():
                 for i in range(n):
                     mostrar_solicitud(orden[i], codigos, fechas, dnis,
                                       nombres, telefonos, niveles, grados,
-                                      secciones, tramites, estados,
+                                      condiciones, tramites, estados,
                                       responsables)
 
         # ------------------------------------------------ 4. REPORTE
@@ -473,7 +484,7 @@ def main():
                 print("===== LISTADO DE SOLICITUDES ESCOLARES =====")
                 for i in range(n):
                     mostrar_solicitud(i, codigos, fechas, dnis, nombres,
-                                      telefonos, niveles, grados, secciones,
+                                      telefonos, niveles, grados, condiciones,
                                       tramites, estados, responsables)
 
         # ------------------------------------------------ 0. SALIR

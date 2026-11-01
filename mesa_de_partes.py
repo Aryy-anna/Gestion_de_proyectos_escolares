@@ -81,6 +81,31 @@ def contiene_texto(texto, buscado):
     return False
 
 
+def buscar_personal(codigo_acceso, cat_codigos):
+    """Devuelve la posicion del codigo de acceso o -1 si no existe."""
+    for i in range(len(cat_codigos)):
+        if cat_codigos[i] == codigo_acceso.strip().upper():
+            return i
+    return -1
+
+
+def iniciar_sesion(cat_codigos, cat_personal):
+    """Pide el codigo de acceso (maximo 3 intentos).
+    Devuelve el nombre del personal o "" si se agotaron los intentos."""
+    print("================================================")
+    print(" ACCESO AL SISTEMA (use su codigo de personal)")
+    print("================================================")
+    for intento in range(3):
+        codigo_acceso = input("Codigo de acceso: ")
+        pos = buscar_personal(codigo_acceso, cat_codigos)
+        if pos >= 0:
+            print("Bienvenido(a):", cat_personal[pos])
+            return cat_personal[pos]
+        print("[!] Codigo de acceso no valido. Intentos restantes:",
+              2 - intento)
+    return ""
+
+
 # ------------------------------------------------------------ SUBPROCESOS
 def busqueda_lineal(codigos, dnis, nombres, grados, condiciones, tramites,
                     n, buscado):
@@ -267,6 +292,9 @@ def main():
 
     cat_niveles = ["INICIAL", "PRIMARIA", "SECUNDARIA"]
     cat_condiciones = ["ESTUDIANTE", "EGRESADO"]
+    cat_codigos_acceso = ["SEC-01", "SEC-02"]
+    cat_personal = ["Mery Elizabeth Herrera Sanchez",
+                    "Mailita Anali Julca Quezada"]
     cat_tramites = [
         "CONSTANCIA DE ESTUDIOS",
         "CERTIFICADO DE ESTUDIOS",
@@ -276,6 +304,12 @@ def main():
         "OTROS",
     ]
     cat_estados = ["RECIBIDO", "EN REVISION", "OBSERVADO", "ATENDIDO"]
+
+    # Primero el acceso por codigo (reemplaza escribir el nombre)
+    usuario = iniciar_sesion(cat_codigos_acceso, cat_personal)
+    if usuario == "":
+        print("Acceso denegado. Se cierra el sistema.")
+        return
 
     n = 0
     opcion = -1
@@ -374,7 +408,7 @@ def main():
                 tramite = cat_tramites[criterio - 1]
 
                 fecha = fecha_del_sistema()
-                responsable = input("Personal responsable: ")
+                responsable = usuario
 
                 # Guardado (posicion n = siguiente libre; luego n += 1)
                 codigo = generar_codigo(n + 1)
@@ -396,6 +430,7 @@ def main():
                 print("[OK] Solicitud registrada correctamente.")
                 print("Codigo asignado:", codigo)
                 print("Fecha de registro:", fecha)
+                print("Registrado por:", responsable)
                 print("Estado inicial: RECIBIDO")
 
         # ------------------------------------------------ 2. BUSCAR

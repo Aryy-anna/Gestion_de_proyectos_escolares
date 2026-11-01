@@ -1,3 +1,5 @@
+from datetime import date
+
 MAX_SOLICITUDES = 200
 
 
@@ -14,6 +16,11 @@ def leer_entero(mensaje):
 
 
 # -------------------------------------------------------------- FUNCIONES
+def fecha_del_sistema():
+    """Fecha actual del equipo en formato AAAA-MM-DD (no se digita)."""
+    return date.today().isoformat()
+
+
 def generar_codigo(n):
     # n < 10 -> "00n" ; n < 100 -> "0nn" ; si no -> "nnn"
     if n < 10:
@@ -366,7 +373,7 @@ def main():
                         break
                 tramite = cat_tramites[criterio - 1]
 
-                fecha = input("Fecha de solicitud (AAAAMMDD): ")
+                fecha = fecha_del_sistema()
                 responsable = input("Personal responsable: ")
 
                 # Guardado (posicion n = siguiente libre; luego n += 1)
@@ -388,6 +395,7 @@ def main():
                 print("")
                 print("[OK] Solicitud registrada correctamente.")
                 print("Codigo asignado:", codigo)
+                print("Fecha de registro:", fecha)
                 print("Estado inicial: RECIBIDO")
 
         # ------------------------------------------------ 2. BUSCAR

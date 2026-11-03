@@ -1,30 +1,33 @@
 # Mesa de partes digital - I.E. N.° 81770 "María Inmaculada Concepción" (Chao, Virú)
 
-Prototipo de consola en **Python** para el curso **Fundamentos de Programación (CIIN1205P)**, UPN - Grupo 3.
-Reto: "Del archivador al algoritmo". Solución elegida: **Alternativa B** (sistema simplificado con acceso y búsqueda por código).
+Prototipo de consola en **Python 3** para el curso **Fundamentos de Programación (CIIN1205P)**, UPN - Grupo 3.
+Reto: "Del archivador al algoritmo". Solución elegida: **Alternativa B** (sistema modular con arreglos paralelos en memoria).
 
 ## Ejecución
 ```
 python mesa_de_partes.py
 ```
-Requiere Python 3.8 o superior. No usa librerías externas. Códigos de acceso de prueba: `SEC-01`, `SEC-02`.
+Requiere Python 3.8 o superior. No usa librerías externas.
+Códigos de acceso de prueba: `SEC-01`, `SEC-02`, `DIR-01` (3 intentos).
 
-## Funciones del menú
+## Menú
 | Opción | Función |
 |---|---|
-| 1 | Registrar solicitud (condición estudiante/egresado, fecha del sistema, estado inicial RECIBIDO) |
-| 2 | Buscar solicitud por código (búsqueda secuencial) |
-| 3 | Actualizar estado: RECIBIDO > EN REVISIÓN > OBSERVADO / APROBADO / RECHAZADO > ATENDIDO, con nota de observación |
-| 4 | Ordenar por código (inserción, ascendente o descendente) |
-| 5 | Reporte de documentos (matriz trámite × estado y detalle por trámite) |
-| 6 | Índice de ingresos (orden de llegada y conteo por fecha) |
-| 7 | Mostrar todas las solicitudes |
+| 1 | Registrar solicitud (condición estudiante o egresado; la fecha la toma el sistema; estado inicial RECIBIDO) |
+| 2 | Buscar por código, DNI, nombre, grado, condición o trámite (búsqueda lineal) |
+| 3 | Ordenar por código, fecha, nombre, nivel o trámite (burbuja o inserción) |
+| 4 | Reporte por trámite y estado |
+| 5 | Mostrar todas las solicitudes |
+| 6 | Actualizar estado: RECIBIDO, EN REVISION, OBSERVADO o ATENDIDO (APROBADO o RECHAZADO), con nota de observación |
+| 7 | Reporte de documentos (solicitados, en trámite, aprobados, rechazados) |
+| 8 | Índice de ingresos por fecha |
+| 0 | Salir |
 
-Los datos se guardan en `solicitudes.csv` (separador `;`).
+Los datos viven en memoria mientras el programa está abierto; guardarlos en archivo queda como mejora (Alternativa A).
 
 ## Pruebas
 ```
-python -m unittest -v test_mesa_de_partes
+python -m unittest -v
 ```
 
 ## Historial

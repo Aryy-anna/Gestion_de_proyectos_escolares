@@ -1,14 +1,18 @@
+"""Mesa de partes digital - I.E. N. 81770 "Maria Inmaculada Concepcion".
+
+Prototipo de consola (Alternativa B): arreglos paralelos en memoria,
+acceso por codigo de personal, flujo de estados y reportes.
+Ejecutar:  python mesa_de_partes.py
+"""
 from datetime import date
 
 MAX_SOLICITUDES = 200
-ARCHIVO = "solicitudes.csv"
-SEPARADOR = ";"
+MAX_INTENTOS = 3
 
 
 # ------------------------------------------------------------------ ENTRADA
 def leer_entero(mensaje):
-    """Lee un entero. Si el usuario escribe texto, vuelve a pedirlo
-    (en PSeInt un dato no numerico en 'Leer' tambien se rechaza)."""
+    """Lee un entero. Si el usuario escribe texto, vuelve a pedirlo."""
     while True:
         texto = input(mensaje).strip()
         try:
@@ -17,10 +21,24 @@ def leer_entero(mensaje):
             print("[!] Ingrese un numero entero.")
 
 
-# -------------------------------------------------------------- FUNCIONES
-def fecha_del_sistema():
-    """Fecha actual del equipo en formato AAAA-MM-DD (no se digita)."""
-    return date.today().isoformat()
+def leer_no_vacio(mensaje):
+    """Lee un texto y lo vuelve a pedir mientras este vacio."""
+    while True:
+        texto = input(mensaje).strip()
+        if texto != "":
+            return texto
+        print("[!] Este dato no puede quedar vacio.")
+
+
+# --------------------------------------------------------- FECHA Y CODIGOS
+def obtener_fecha_sistema():
+    """Fecha actual del sistema en formato AAAAMMDD (no la escribe el usuario)."""
+    return date.today().strftime("%Y%m%d")
+
+
+def formatear_fecha(fecha):
+    """Convierte AAAAMMDD en DD/MM/AAAA."""
+    return fecha[6:8] + "/" + fecha[4:6] + "/" + fecha[0:4]
 
 
 def generar_codigo(n):
@@ -34,9 +52,10 @@ def generar_codigo(n):
     return "SOL-" + numero
 
 
+# -------------------------------------------------------------- VALIDACION
 def solo_digitos(texto):
-    # Se compara caracter por caracter (igual que el PSeInt); evita que
-    # str.isdigit() acepte simbolos como "²".
+    # Se compara caracter por caracter; evita que str.isdigit() acepte
+    # simbolos como "²".
     if len(texto) == 0:
         return False
     for c in texto:
@@ -67,108 +86,169 @@ def validar_nombre(nombre):
     return len(nombre) >= 5 and contar_palabras(nombre) >= 2
 
 
-def buscar_personal(codigo_acceso, cat_codigos):
-    """Devuelve la posicion del codigo de acceso o -1 si no existe."""
-    for i in range(len(cat_codigos)):
-        if cat_codigos[i] == codigo_acceso.strip().upper():
-            return i
-    return -1
+# ------------------------------------------------------- ACCESO Y ESTADOS
+def ingresar_acceso(cat_accesos):
+    """Pide el codigo de acceso (hasta 3 intentos).
+    Devuelve la posicion del codigo en el catalogo o -1 si se denegó."""
+    intentos = 0
+    posicion = -1
+
+    while intentos < MAX_INTENTOS and posicion == -1:
+        codigo = input("Codigo de acceso: ").strip().upper()
+
+        for i in range(len(cat_accesos)):
+            if cat_accesos[i] == codigo:
+                posicion = i
+
+        if posicion == -1:
+            intentos += 1
+            print("[!] Codigo incorrecto. Intentos restantes:",
+                  MAX_INTENTOS - intentos)
+
+    return posicion
 
 
-def iniciar_sesion(cat_codigos, cat_personal):
-    """Pide el codigo de acceso (maximo 3 intentos).
-    Devuelve el nombre del personal o "" si se agotaron los intentos."""
-    print("================================================")
-    print(" ACCESO AL SISTEMA (use su codigo de personal)")
-    print("================================================")
-    for intento in range(3):
-        codigo_acceso = input("Codigo de acceso: ")
-        pos = buscar_personal(codigo_acceso, cat_codigos)
-        if pos >= 0:
-            print("Bienvenido(a):", cat_personal[pos])
-            return cat_personal[pos]
-        print("[!] Codigo de acceso no valido. Intentos restantes:",
-              2 - intento)
-    return ""
+def estado_permitido(actual, nuevo):
+    """Flujo del tramite: RECIBIDO > EN REVISION > (OBSERVADO | ATENDIDO).
+    Una solicitud OBSERVADA vuelve a EN REVISION; ATENDIDO es final."""
+    permitido = False
+
+    if actual == "RECIBIDO":
+        permitido = (nuevo == "EN REVISION")
+    if actual == "EN REVISION":
+        permitido = (nuevo == "OBSERVADO" or nuevo == "ATENDIDO")
+    if actual == "OBSERVADO":
+        permitido = (nuevo == "EN REVISION")
+
+    return permitido
 
 
-# ------------------------------------------------------------ SUBPROCESOS
-def limpiar_campo(texto):
-    """Evita que el separador o un salto de linea rompan el archivo CSV."""
-    return texto.replace(SEPARADOR, ",").replace("\n", " ").replace("\r", " ")
-
-
-def guardar_archivo(columnas, n):
-    """Guarda las n solicitudes en el CSV (una linea por solicitud).
-    'columnas' es la lista de los 12 arreglos paralelos."""
-    with open(ARCHIVO, "w", encoding="utf-8") as archivo:
-        for i in range(n):
-            partes = []
-            for c in range(len(columnas)):
-                partes.append(limpiar_campo(columnas[c][i]))
-            archivo.write(SEPARADOR.join(partes) + "\n")
-
-
-def cargar_archivo(columnas):
-    """Lee el CSV al iniciar. Devuelve la cantidad de solicitudes cargadas
-    (0 si el archivo no existe)."""
-    n = 0
-    try:
-        with open(ARCHIVO, "r", encoding="utf-8") as archivo:
-            for linea in archivo:
-                partes = linea.rstrip("\n").split(SEPARADOR)
-                if len(partes) == len(columnas) and n < MAX_SOLICITUDES:
-                    for c in range(len(columnas)):
-                        columnas[c][n] = partes[c]
-                    n += 1
-    except FileNotFoundError:
-        pass
-    return n
-
-
-def mostrar_solicitud(pos, codigos, fechas, dnis, nombres, telefonos,
-                      niveles, grados, condiciones, tramites, estados,
-                      responsables, notas):
-    print("--------------------------------------------")
-    print("Codigo de solicitud:", codigos[pos])
-    print("Fecha:", fechas[pos])
-    print("DNI del estudiante:", dnis[pos])
-    print("Estudiante:", nombres[pos])
-    print("Telefono de contacto:", telefonos[pos])
-    print("Nivel educativo:", niveles[pos])
-    print("Grado o edad:", grados[pos])
-    print("Condicion:", condiciones[pos])
-    print("Tipo de tramite:", tramites[pos])
-    print("Estado:", estados[pos])
-    print("Personal responsable:", responsables[pos])
-    if notas[pos] != "":
-        print("Nota de observacion:", notas[pos])
-
-
-def buscar_por_codigo(codigos, n, codigo):
-    """Busqueda secuencial exacta (sin distinguir mayusculas).
-    Devuelve (posicion o -1, comparaciones)."""
-    comparaciones = 0
-    buscado = codigo.strip().upper()
+def buscar_posicion_codigo(codigos, n, codigo):
+    """Busqueda lineal exacta por codigo. Devuelve la posicion o -1."""
+    posicion = -1
     for i in range(n):
-        comparaciones += 1
-        if codigos[i] == buscado:
-            return i, comparaciones
-    return -1, comparaciones
+        if codigos[i] == codigo.strip().upper():
+            posicion = i
+    return posicion
 
 
-def estados_siguientes(estado_actual, cat_estados, permitido):
-    """Lista los estados a los que se puede pasar desde el estado actual
-    segun la matriz de transiciones permitido[actual][nuevo]."""
-    fila = 0
-    for i in range(len(cat_estados)):
-        if cat_estados[i] == estado_actual:
-            fila = i
-    siguientes = []
-    for j in range(len(cat_estados)):
-        if permitido[fila][j]:
-            siguientes.append(cat_estados[j])
-    return siguientes
+def actualizar_estado(pos, estados, resultados, notas, codigos, fechas, dnis,
+                      nombres, telefonos, niveles, grados, condiciones,
+                      tramites, responsables, cat_estados, cat_resultados):
+    """Cambia el estado de la solicitud en 'pos' respetando el flujo."""
+    actual = estados[pos]
+    print("Estado actual:", actual)
+
+    if actual == "ATENDIDO":
+        print("La solicitud ya fue atendida (" + resultados[pos] + ").")
+        return
+
+    print("ESTADOS DISPONIBLES")
+    for j in range(4):
+        if estado_permitido(actual, cat_estados[j]):
+            print(str(j + 1) + ". " + cat_estados[j])
+
+    while True:
+        eleccion = leer_entero("Seleccione nuevo estado (0 = cancelar): ")
+        if eleccion == 0:
+            print("[!] Cambio cancelado.")
+            return
+        if 1 <= eleccion <= 4 and estado_permitido(actual,
+                                                   cat_estados[eleccion - 1]):
+            break
+        print("[!] Cambio no permitido desde el estado " + actual + ".")
+
+    nuevo = cat_estados[eleccion - 1]
+
+    if nuevo == "OBSERVADO":
+        notas[pos] = leer_no_vacio("Nota de observacion: ")
+
+    if nuevo == "ATENDIDO":
+        print("RESULTADO")
+        print("1. " + cat_resultados[0])
+        print("2. " + cat_resultados[1])
+        while True:
+            eleccion = leer_entero("Seleccione resultado (1-2): ")
+            if eleccion == 1 or eleccion == 2:
+                break
+        resultados[pos] = cat_resultados[eleccion - 1]
+
+        if resultados[pos] == "RECHAZADO":
+            notas[pos] = leer_no_vacio("Motivo del rechazo (nota): ")
+
+    estados[pos] = nuevo
+    print("[OK] Estado actualizado.")
+    mostrar_solicitud(pos, codigos, fechas, dnis, nombres, telefonos, niveles,
+                      grados, condiciones, tramites, estados, resultados,
+                      notas, responsables)
+
+
+# ---------------------------------------------------- BUSQUEDA Y ORDEN
+def contiene_texto(texto, buscado):
+    """Devuelve True si 'buscado' aparece dentro de 'texto' (sin distinguir
+    mayusculas). Una busqueda vacia coincide con todo."""
+    texto = texto.upper()
+    buscado = buscado.upper()
+    lb = len(buscado)
+
+    if lb == 0:
+        return True
+    if lb <= len(texto):
+        for i in range(len(texto) - lb + 1):
+            if texto[i:i + lb] == buscado:
+                return True
+    return False
+
+
+def busqueda_lineal(codigos, dnis, nombres, grados, condiciones, tramites,
+                    n, buscado):
+    """Devuelve (encontrados, total, comparaciones)."""
+    encontrados = [0] * MAX_SOLICITUDES
+    total = 0
+    comparaciones = 0
+
+    for i in range(n):
+        coincide = False
+        k = 1
+
+        while not coincide and k <= 6:
+            if k == 1:
+                campo = codigos[i]
+            elif k == 2:
+                campo = dnis[i]
+            elif k == 3:
+                campo = nombres[i]
+            elif k == 4:
+                campo = grados[i]
+            elif k == 5:
+                campo = condiciones[i]
+            else:
+                campo = tramites[i]
+
+            comparaciones += 1
+            coincide = contiene_texto(campo, buscado)
+            k += 1
+
+        if coincide:
+            encontrados[total] = i
+            total += 1
+
+    return encontrados, total, comparaciones
+
+
+def armar_claves(claves, n, criterio, codigos, fechas, nombres, niveles,
+                 tramites):
+    for i in range(n):
+        if criterio == 2:
+            claves[i] = fechas[i]
+        elif criterio == 3:
+            claves[i] = nombres[i].upper()
+        elif criterio == 4:
+            claves[i] = niveles[i]
+        elif criterio == 5:
+            claves[i] = tramites[i]
+        else:
+            claves[i] = codigos[i]
 
 
 def todas_las_posiciones(orden, n):
@@ -176,10 +256,39 @@ def todas_las_posiciones(orden, n):
         orden[i] = i
 
 
+def ordenar_burbuja(orden, claves, n, ascendente):
+    """Burbuja con bandera de parada anticipada.
+    Devuelve (comparaciones, intercambios)."""
+    todas_las_posiciones(orden, n)
+
+    comparaciones = 0
+    intercambios = 0
+    i = 1
+    hubo_intercambio = True
+
+    while i <= n - 1 and hubo_intercambio:
+        hubo_intercambio = False
+
+        for j in range(n - i):
+            comparaciones += 1
+
+            if ascendente:
+                desordenado = claves[orden[j]] > claves[orden[j + 1]]
+            else:
+                desordenado = claves[orden[j]] < claves[orden[j + 1]]
+
+            if desordenado:
+                orden[j], orden[j + 1] = orden[j + 1], orden[j]
+                intercambios += 1
+                hubo_intercambio = True
+
+        i += 1
+
+    return comparaciones, intercambios
+
+
 def ordenar_insercion(orden, claves, n, ascendente):
-    """Insercion directa sobre el arreglo auxiliar de posiciones 'orden'
-    (no se mueven los demas arreglos). Devuelve (comparaciones,
-    desplazamientos)."""
+    """Insercion directa. Devuelve (comparaciones, desplazamientos)."""
     todas_las_posiciones(orden, n)
 
     comparaciones = 0
@@ -208,99 +317,145 @@ def ordenar_insercion(orden, claves, n, ascendente):
     return comparaciones, desplazamientos
 
 
-def reporte_tramite_estado(tramites, estados, n, cat_tramites, cat_estados):
-    ne = len(cat_estados)
-    nt = len(cat_tramites)
-    matriz = [[0] * ne for _ in range(nt)]
+# ------------------------------------------------- PRESENTACION Y REPORTES
+def mostrar_solicitud(pos, codigos, fechas, dnis, nombres, telefonos,
+                      niveles, grados, condiciones, tramites, estados,
+                      resultados, notas, responsables):
+    estado = estados[pos]
+    if resultados[pos] != "":
+        estado = estado + " - " + resultados[pos]
+
+    nota = notas[pos]
+    if nota == "":
+        nota = "-"
+
+    print("--------------------------------------------")
+    print("Codigo de solicitud:", codigos[pos])
+    print("Fecha de registro:", formatear_fecha(fechas[pos]))
+    print("DNI del estudiante:", dnis[pos])
+    print("Estudiante:", nombres[pos])
+    print("Telefono de contacto:", telefonos[pos])
+    print("Nivel educativo:", niveles[pos])
+    print("Grado o edad:", grados[pos])
+    print("Condicion:", condiciones[pos])
+    print("Tipo de tramite:", tramites[pos])
+    print("Estado:", estado)
+    print("Nota de observacion:", nota)
+    print("Personal responsable:", responsables[pos])
+
+
+def fila_del_tramite(tramite, cat_tramites):
+    """Posicion del tramite en el catalogo; OTROS (ultima fila) por defecto."""
+    fila = len(cat_tramites) - 1
+    for i in range(len(cat_tramites)):
+        if cat_tramites[i] == tramite:
+            fila = i
+    return fila
+
+
+def reporte_tramite_estado(tramites, estados, resultados, n, cat_tramites,
+                           cat_estados):
+    # matriz[6][4] inicializada en 0
+    matriz = [[0] * 4 for _ in range(6)]
+    aprobados = 0
+    rechazados = 0
 
     for k in range(n):
-        fila = nt - 1  # "OTROS" por defecto (ultima fila)
+        fila = fila_del_tramite(tramites[k], cat_tramites)
 
-        for i in range(nt):
-            if cat_tramites[i] == tramites[k]:
-                fila = i
-
-        for j in range(ne):
+        for j in range(4):
             if cat_estados[j] == estados[k]:
                 matriz[fila][j] += 1
 
+        if resultados[k] == "APROBADO":
+            aprobados += 1
+        if resultados[k] == "RECHAZADO":
+            rechazados += 1
+
     print("")
     print("===== REPORTE POR TRAMITE Y ESTADO =====")
-    encabezado = "TRAMITE"
-    for j in range(ne):
-        encabezado += " | " + cat_estados[j]
-    print(encabezado + " | TOTAL")
+    print("TRAMITE | RECIBIDO | EN REVISION | OBSERVADO | ATENDIDO | TOTAL")
 
-    for i in range(nt):
+    for i in range(6):
         suma_fila = 0
         print(cat_tramites[i], end="")
 
-        for j in range(ne):
+        for j in range(4):
             print(" | " + str(matriz[i][j]), end="")
             suma_fila += matriz[i][j]
 
         print(" | " + str(suma_fila))
 
     print("TOTAL GENERAL:", n)
+    print("Atendidos: " + str(aprobados) + " aprobados y " + str(rechazados)
+          + " rechazados")
 
 
-def reporte_documentos(codigos, fechas, condiciones, tramites, estados,
-                       notas, n, cat_tramites, cat_estados):
-    """Reporte de documentos: matriz tramite x estado y, debajo, el detalle
-    de cada documento agrupado por tipo de tramite."""
-    reporte_tramite_estado(tramites, estados, n, cat_tramites, cat_estados)
+def reporte_documentos(tramites, estados, resultados, n, cat_tramites):
+    solicitados = [0] * 6
+    en_tramite = [0] * 6
+    aprobados = [0] * 6
+    rechazados = [0] * 6
+
+    for k in range(n):
+        fila = fila_del_tramite(tramites[k], cat_tramites)
+        solicitados[fila] += 1
+
+        if estados[k] != "ATENDIDO":
+            en_tramite[fila] += 1
+        elif resultados[k] == "APROBADO":
+            aprobados[fila] += 1
+        else:
+            rechazados[fila] += 1
 
     print("")
-    print("===== DETALLE DE DOCUMENTOS POR TRAMITE =====")
-    for i in range(len(cat_tramites)):
-        cantidad = 0
-        for k in range(n):
-            if tramites[k] == cat_tramites[i]:
-                cantidad += 1
+    print("===== REPORTE DE DOCUMENTOS =====")
+    print("DOCUMENTO | SOLICITADOS | EN TRAMITE | APROBADOS | RECHAZADOS")
 
-        print("")
-        print(cat_tramites[i] + " (" + str(cantidad) + ")")
+    for i in range(6):
+        print(cat_tramites[i] + " | " + str(solicitados[i]) + " | "
+              + str(en_tramite[i]) + " | " + str(aprobados[i]) + " | "
+              + str(rechazados[i]))
 
-        if cantidad == 0:
-            print("   (sin documentos)")
-        else:
-            for k in range(n):
-                if tramites[k] == cat_tramites[i]:
-                    linea = ("   " + codigos[k] + " | " + fechas[k] + " | "
-                             + condiciones[k] + " | " + estados[k])
-                    if notas[k] != "":
-                        linea += " | Nota: " + notas[k]
-                    print(linea)
+    print("TOTAL | " + str(sum(solicitados)) + " | " + str(sum(en_tramite))
+          + " | " + str(sum(aprobados)) + " | " + str(sum(rechazados)))
 
 
-def indice_ingresos(codigos, fechas, tramites, estados, n):
-    """Indice de ingresos: lista numerada en orden de llegada y conteo de
-    ingresos por fecha."""
+def indice_ingresos(codigos, fechas, n):
+    dias = [""] * MAX_SOLICITUDES
+    cantidades = [0] * MAX_SOLICITUDES
+    total_dias = 0
+
+    for k in range(n):
+        pos = -1
+        for d in range(total_dias):
+            if dias[d] == fechas[k]:
+                pos = d
+
+        if pos == -1:
+            dias[total_dias] = fechas[k]
+            cantidades[total_dias] = 0
+            pos = total_dias
+            total_dias += 1
+
+        cantidades[pos] += 1
+
     print("")
     print("===== INDICE DE INGRESOS =====")
-    print("N. | CODIGO | FECHA | TRAMITE | ESTADO")
-    for i in range(n):
-        print(str(i + 1) + " | " + codigos[i] + " | " + fechas[i] + " | "
-              + tramites[i] + " | " + estados[i])
+    print("FECHA | INGRESOS | % DEL TOTAL | CODIGOS")
 
-    # Conteo por fecha con dos arreglos paralelos (fecha, cantidad)
-    fechas_unicas = []
-    cantidades = []
-    for i in range(n):
-        pos = -1
-        for j in range(len(fechas_unicas)):
-            if fechas_unicas[j] == fechas[i]:
-                pos = j
-        if pos == -1:
-            fechas_unicas.append(fechas[i])
-            cantidades.append(1)
-        else:
-            cantidades[pos] += 1
+    for d in range(total_dias):
+        lista = ""
+        for k in range(n):
+            if fechas[k] == dias[d]:
+                if lista != "":
+                    lista = lista + ", "
+                lista = lista + codigos[k]
 
-    print("")
-    print("INGRESOS POR FECHA")
-    for j in range(len(fechas_unicas)):
-        print(fechas_unicas[j] + ": " + str(cantidades[j]) + " solicitud(es)")
+        porcentaje = round(cantidades[d] * 1000 / n) / 10
+        print(formatear_fecha(dias[d]) + " | " + str(cantidades[d]) + " | "
+              + format(porcentaje, ".1f") + "% | " + lista)
+
     print("TOTAL DE INGRESOS:", n)
 
 
@@ -317,19 +472,14 @@ def main():
     condiciones = [""] * MAX_SOLICITUDES
     tramites = [""] * MAX_SOLICITUDES
     estados = [""] * MAX_SOLICITUDES
-    responsables = [""] * MAX_SOLICITUDES
+    resultados = [""] * MAX_SOLICITUDES
     notas = [""] * MAX_SOLICITUDES
+    responsables = [""] * MAX_SOLICITUDES
+    claves = [""] * MAX_SOLICITUDES
     orden = [0] * MAX_SOLICITUDES
-
-    # Todas las columnas juntas, en el orden en que se guardan en el CSV
-    columnas = [codigos, fechas, dnis, nombres, telefonos, condiciones,
-                niveles, grados, tramites, estados, responsables, notas]
 
     cat_niveles = ["INICIAL", "PRIMARIA", "SECUNDARIA"]
     cat_condiciones = ["ESTUDIANTE", "EGRESADO"]
-    cat_codigos_acceso = ["SEC-01", "SEC-02"]
-    cat_personal = ["Mery Elizabeth Herrera Sanchez",
-                    "Mailita Anali Julca Quezada"]
     cat_tramites = [
         "CONSTANCIA DE ESTUDIOS",
         "CERTIFICADO DE ESTUDIOS",
@@ -338,41 +488,43 @@ def main():
         "ACTUALIZACION DE DATOS",
         "OTROS",
     ]
-    cat_estados = ["RECIBIDO", "EN REVISION", "OBSERVADO", "APROBADO",
-                   "RECHAZADO", "ATENDIDO"]
-    # permitido[actual][nuevo] = 1 si el cambio de estado es valido
-    #                RECIB REVIS OBSER APROB RECHA ATEND
-    permitido = [[0, 1, 0, 0, 0, 0],   # RECIBIDO    -> EN REVISION
-                 [0, 0, 1, 1, 1, 0],   # EN REVISION -> OBSERVADO/APROBADO/RECHAZADO
-                 [0, 1, 0, 0, 1, 0],   # OBSERVADO   -> EN REVISION/RECHAZADO
-                 [0, 0, 0, 0, 0, 1],   # APROBADO    -> ATENDIDO
-                 [0, 0, 0, 0, 0, 0],   # RECHAZADO   (final)
-                 [0, 0, 0, 0, 0, 0]]   # ATENDIDO    (final)
+    cat_estados = ["RECIBIDO", "EN REVISION", "OBSERVADO", "ATENDIDO"]
+    cat_resultados = ["APROBADO", "RECHAZADO"]
+    # Personal autorizado: el codigo de acceso identifica al responsable
+    cat_accesos = ["SEC-01", "SEC-02", "DIR-01"]
+    cat_personal = ["Mery Elizabeth Herrera Sanchez",
+                    "Mailita Anali Julca Quezada",
+                    "Luis Rafael Juarez Martinez"]
 
-    # Primero el acceso por codigo (reemplaza escribir el nombre)
-    usuario = iniciar_sesion(cat_codigos_acceso, cat_personal)
-    if usuario == "":
-        print("Acceso denegado. Se cierra el sistema.")
+    n = 0
+
+    print("================================================")
+    print(" SISTEMA DE GESTION DE SOLICITUDES ESCOLARES")
+    print(" I.E. N. 81770 MARIA INMACULADA CONCEPCION")
+    print("================================================")
+
+    persona = ingresar_acceso(cat_accesos)
+    if persona == -1:
+        print("Acceso denegado. Cerrando el sistema.")
         return
 
-    n = cargar_archivo(columnas)
-    if n > 0:
-        print("Se recuperaron", n, "solicitudes desde", ARCHIVO)
-    opcion = -1
+    responsable_actual = cat_personal[persona] + " (" + cat_accesos[persona] + ")"
+    print("Bienvenido(a): " + responsable_actual)
 
     while True:
         print("")
         print("================================================")
         print(" SISTEMA DE GESTION DE SOLICITUDES ESCOLARES")
-        print(" I.E. N. 81770 MARIA INMACULADA CONCEPCION")
+        print(" Personal: " + responsable_actual)
         print("================================================")
         print("1. Registrar solicitud escolar")
-        print("2. Buscar solicitud por codigo")
-        print("3. Actualizar estado de una solicitud")
-        print("4. Ordenar solicitudes por codigo")
-        print("5. Reporte de documentos")
-        print("6. Indice de ingresos")
-        print("7. Mostrar todas las solicitudes")
+        print("2. Buscar solicitud")
+        print("3. Ordenar solicitudes")
+        print("4. Reporte por tramite y estado")
+        print("5. Mostrar todas las solicitudes")
+        print("6. Actualizar estado de una solicitud")
+        print("7. Reporte de documentos")
+        print("8. Indice de ingresos")
         print("0. Salir")
         opcion = leer_entero("Seleccione una opcion: ")
 
@@ -430,13 +582,11 @@ def main():
                         break
                 nivel = cat_niveles[criterio - 1]
 
-                while True:
-                    grado = input("Grado o edad: ").strip()
-                    if grado != "":
-                        break
-                    print("[!] Este dato no puede estar vacio.")
+                grado = leer_no_vacio("Grado o edad: ")
+
+                # Condicion (reemplaza a la seccion)
                 print("")
-                print("CONDICION DEL SOLICITANTE")
+                print("CONDICION")
                 for i in range(2):
                     print(str(i + 1) + ". " + cat_condiciones[i])
 
@@ -445,7 +595,6 @@ def main():
                     if 1 <= criterio <= 2:
                         break
                 condicion = cat_condiciones[criterio - 1]
-
 
                 # Tramite
                 print("")
@@ -459,12 +608,11 @@ def main():
                         break
                 tramite = cat_tramites[criterio - 1]
 
-                fecha = fecha_del_sistema()
-                responsable = usuario
-
-                # Guardado (posicion n = siguiente libre; luego n += 1)
+                # La fecha la toma el sistema y el responsable sale del acceso
+                fecha = obtener_fecha_sistema()
                 codigo = generar_codigo(n + 1)
 
+                # Guardado (posicion n = siguiente libre; luego n += 1)
                 codigos[n] = codigo
                 fechas[n] = fecha
                 dnis[n] = dni
@@ -475,16 +623,15 @@ def main():
                 condiciones[n] = condicion
                 tramites[n] = tramite
                 estados[n] = "RECIBIDO"
-                responsables[n] = responsable
+                resultados[n] = ""
                 notas[n] = ""
+                responsables[n] = responsable_actual
                 n += 1
-                guardar_archivo(columnas, n)
 
                 print("")
                 print("[OK] Solicitud registrada correctamente.")
                 print("Codigo asignado:", codigo)
-                print("Fecha de registro:", fecha)
-                print("Registrado por:", responsable)
+                print("Fecha de registro:", formatear_fecha(fecha))
                 print("Estado inicial: RECIBIDO")
 
         # ------------------------------------------------ 2. BUSCAR
@@ -493,75 +640,44 @@ def main():
                 print("No hay solicitudes registradas.")
             else:
                 print("")
-                print("===== BUSQUEDA POR CODIGO =====")
-                codigo = input("Codigo de la solicitud (ej. SOL-001): ")
-                pos, comparaciones = buscar_por_codigo(codigos, n, codigo)
+                print("===== BUSQUEDA DE SOLICITUDES =====")
+                print("Ingrese codigo, DNI, nombre, grado, condicion o tramite:")
+                buscado = input()
+
+                encontrados, total, comparaciones = busqueda_lineal(
+                    codigos, dnis, nombres, grados, condiciones, tramites,
+                    n, buscado)
+
+                print("Coincidencias encontradas:", total)
                 print("Comparaciones realizadas:", comparaciones)
 
-                if pos == -1:
-                    print("[!] No hay coincidencias para", codigo.upper())
-                else:
-                    mostrar_solicitud(pos, codigos, fechas, dnis, nombres,
-                                      telefonos, niveles, grados, condiciones,
-                                      tramites, estados, responsables, notas)
+                for i in range(total):
+                    mostrar_solicitud(encontrados[i], codigos, fechas, dnis,
+                                      nombres, telefonos, niveles, grados,
+                                      condiciones, tramites, estados,
+                                      resultados, notas, responsables)
 
-        # ------------------------------------------------ 3. ESTADO
+        # ------------------------------------------------ 3. ORDENAR
         elif opcion == 3:
-            if n == 0:
-                print("No hay solicitudes registradas.")
-            else:
-                print("")
-                print("===== ACTUALIZAR ESTADO =====")
-                codigo = input("Codigo de la solicitud (ej. SOL-001): ")
-                pos, comparaciones = buscar_por_codigo(codigos, n, codigo)
-
-                if pos == -1:
-                    print("[!] No existe la solicitud", codigo.upper())
-                else:
-                    print("Estado actual:", estados[pos])
-                    siguientes = estados_siguientes(estados[pos],
-                                                    cat_estados, permitido)
-                    if len(siguientes) == 0:
-                        print("[!] La solicitud ya esta cerrada ("
-                              + estados[pos] + "); no admite cambios.")
-                    else:
-                        print("Puede pasar a:")
-                        for i in range(len(siguientes)):
-                            print(str(i + 1) + ". " + siguientes[i])
-                        print("0. Cancelar")
-
-                        while True:
-                            eleccion = leer_entero("Seleccione nuevo estado: ")
-                            if 0 <= eleccion <= len(siguientes):
-                                break
-
-                        if eleccion != 0:
-                            nuevo = siguientes[eleccion - 1]
-
-                            # OBSERVADO y RECHAZADO exigen una nota
-                            if nuevo == "OBSERVADO" or nuevo == "RECHAZADO":
-                                while True:
-                                    if nuevo == "OBSERVADO":
-                                        nota = input("Nota de observacion: ")
-                                    else:
-                                        nota = input("Motivo del rechazo: ")
-                                    if len(nota.strip()) >= 5:
-                                        break
-                                    print("[!] Escriba al menos 5 caracteres.")
-                                notas[pos] = nota.strip()
-
-                            estados[pos] = nuevo
-                            guardar_archivo(columnas, n)
-                            print("[OK]", codigos[pos], "ahora esta",
-                                  estados[pos])
-
-        # ------------------------------------------------ 4. ORDENAR
-        elif opcion == 4:
             if n == 0:
                 print("No hay solicitudes para ordenar.")
             else:
                 print("")
-                print("===== ORDENAR POR CODIGO (insercion) =====")
+                print("===== ORDENAMIENTO DE SOLICITUDES =====")
+                print("1. Codigo")
+                print("2. Fecha")
+                print("3. Nombre del estudiante")
+                print("4. Nivel educativo")
+                print("5. Tipo de tramite")
+
+                while True:
+                    criterio = leer_entero("Seleccione criterio (1-5): ")
+                    if 1 <= criterio <= 5:
+                        break
+
+                armar_claves(claves, n, criterio, codigos, fechas, nombres,
+                             niveles, tramites)
+
                 print("1. Ascendente")
                 print("2. Descendente")
 
@@ -571,34 +687,40 @@ def main():
                         break
 
                 ascendente = (direccion == 1)
-                comparaciones, desplazamientos = ordenar_insercion(
-                    orden, codigos, n, ascendente)
+
+                print("1. Metodo burbuja")
+                print("2. Metodo insercion")
+
+                while True:
+                    metodo = leer_entero("Seleccione metodo: ")
+                    if metodo == 1 or metodo == 2:
+                        break
+
+                if metodo == 1:
+                    comparaciones, movimientos = ordenar_burbuja(
+                        orden, claves, n, ascendente)
+                else:
+                    comparaciones, movimientos = ordenar_insercion(
+                        orden, claves, n, ascendente)
 
                 print("")
                 print("Ordenamiento aplicado correctamente.")
                 print("Comparaciones:", comparaciones)
-                print("Desplazamientos:", desplazamientos)
+                print("Intercambios o desplazamientos:", movimientos)
 
                 for i in range(n):
                     mostrar_solicitud(orden[i], codigos, fechas, dnis,
                                       nombres, telefonos, niveles, grados,
                                       condiciones, tramites, estados,
-                                      responsables, notas)
+                                      resultados, notas, responsables)
 
-        # ------------------------------------------------ 5. REPORTE
+        # ------------------------------------------------ 4. REPORTE
+        elif opcion == 4:
+            reporte_tramite_estado(tramites, estados, resultados, n,
+                                   cat_tramites, cat_estados)
+
+        # ------------------------------------------------ 5. LISTAR
         elif opcion == 5:
-            reporte_documentos(codigos, fechas, condiciones, tramites,
-                               estados, notas, n, cat_tramites, cat_estados)
-
-        # ------------------------------------------------ 6. INDICE
-        elif opcion == 6:
-            if n == 0:
-                print("No hay ingresos registrados.")
-            else:
-                indice_ingresos(codigos, fechas, tramites, estados, n)
-
-        # ------------------------------------------------ 7. LISTAR
-        elif opcion == 7:
             if n == 0:
                 print("No hay solicitudes registradas.")
             else:
@@ -607,7 +729,38 @@ def main():
                 for i in range(n):
                     mostrar_solicitud(i, codigos, fechas, dnis, nombres,
                                       telefonos, niveles, grados, condiciones,
-                                      tramites, estados, responsables, notas)
+                                      tramites, estados, resultados, notas,
+                                      responsables)
+
+        # ------------------------------------------------ 6. ESTADO
+        elif opcion == 6:
+            if n == 0:
+                print("No hay solicitudes registradas.")
+            else:
+                print("")
+                print("===== ACTUALIZAR ESTADO =====")
+                codigo = input("Codigo de la solicitud (ej. SOL-001): ")
+                pos = buscar_posicion_codigo(codigos, n, codigo)
+
+                if pos == -1:
+                    print("[!] No existe una solicitud con ese codigo.")
+                else:
+                    actualizar_estado(pos, estados, resultados, notas,
+                                      codigos, fechas, dnis, nombres,
+                                      telefonos, niveles, grados, condiciones,
+                                      tramites, responsables, cat_estados,
+                                      cat_resultados)
+
+        # ------------------------------------------------ 7. DOCUMENTOS
+        elif opcion == 7:
+            reporte_documentos(tramites, estados, resultados, n, cat_tramites)
+
+        # ------------------------------------------------ 8. INGRESOS
+        elif opcion == 8:
+            if n == 0:
+                print("No hay solicitudes registradas.")
+            else:
+                indice_ingresos(codigos, fechas, n)
 
         # ------------------------------------------------ 0. SALIR
         elif opcion == 0:

@@ -418,3 +418,106 @@ def ordenar_burbuja(orden, claves, n, ascendente):
 
     return comparaciones, intercambios
 
+
+# ------------------------------------------------- PRESENTACION Y REPORTES
+def nombre_completo(pos, apellidos, nombres):
+    return apellidos[pos] + ", " + nombres[pos]
+
+
+def mostrar_solicitud(pos, codigos, fechas, horas, dnis, apellidos, nombres,
+                      telefonos, niveles, grados, condiciones, tramites,
+                      folios, estados, notas, responsables):
+    nota = notas[pos]
+    if nota == "":
+        nota = "-"
+
+    print("--------------------------------------------")
+    print("Codigo de solicitud:", codigos[pos])
+    print("Fecha de registro:", formatear_fecha(fechas[pos]), horas[pos])
+    print("DNI del solicitante:", dnis[pos])
+    print("Solicitante:", nombre_completo(pos, apellidos, nombres))
+    print("Telefono de contacto:", telefonos[pos])
+    print("Condicion:", condiciones[pos])
+    print("Nivel educativo:", niveles[pos])
+    print("Grado o edad:", grados[pos])
+    print("Tipo de tramite:", tramites[pos])
+    print("Folios:", folios[pos])
+    print("Estado:", estados[pos])
+    print("Motivo del estado:", nota)
+    print("Personal responsable:", responsables[pos])
+
+
+def listar_tramites(codigos, fechas, horas, tramites, apellidos, nombres,
+                    estados, n):
+    print("")
+    print("===== LISTA DE TRAMITES / EXPEDIENTES =====")
+    print("CODIGO | FECHA | TRAMITE | REMITENTE | ESTADO")
+    for i in range(n):
+        print(codigos[i] + " | " + formatear_fecha(fechas[i]) + " | "
+              + tramites[i] + " | " + nombre_completo(i, apellidos, nombres)
+              + " | " + estados[i])
+    print("TOTAL DE EXPEDIENTES:", n)
+
+
+def mostrar_expediente(pos, codigos, fechas, horas, dnis, apellidos, nombres,
+                       tramites, folios, estados, notas, seguimiento):
+    """Datos del remitente (nombre, DNI) y estado, mas el historial."""
+    print("")
+    print("===== EXPEDIENTE " + codigos[pos] + " =====")
+    print("Remitente:", nombre_completo(pos, apellidos, nombres))
+    print("DNI:", dnis[pos])
+    print("Estado:", estados[pos])
+    print("Motivo del estado:", notas[pos] if notas[pos] != "" else "-")
+    print("Tramite:", tramites[pos])
+    print("Registrado el:", formatear_fecha(fechas[pos]), horas[pos])
+    print("Folios:", folios[pos])
+    print("Seguimiento:")
+
+    numero = numero_de_codigo(codigos[pos])
+    for e in seguimiento:
+        if e[0] == numero:
+            texto = "  - " + formatear_fecha(e[2]) + " " + e[3] + " | " + e[1]
+            if e[4] != "":
+                texto = texto + " | " + e[4]
+            print(texto)
+
+
+def fila_del_tramite(tramite, cat_tramites):
+    """Posicion del tramite en el catalogo; OTROS (ultima fila) por defecto."""
+    fila = len(cat_tramites) - 1
+    for i in range(len(cat_tramites)):
+        if cat_tramites[i] == tramite:
+            fila = i
+    return fila
+
+
+def reporte_documentos(tramites, estados, n, cat_tramites, cat_estados):
+    ne = len(cat_estados)
+    matriz = [[0] * ne for _ in range(6)]
+
+    for k in range(n):
+        fila = fila_del_tramite(tramites[k], cat_tramites)
+
+        for j in range(ne):
+            if cat_estados[j] == estados[k]:
+                matriz[fila][j] += 1
+
+    print("")
+    print("===== REPORTE DE DOCUMENTOS =====")
+    encabezado = "TRAMITE"
+    for j in range(ne):
+        encabezado = encabezado + " | " + cat_estados[j].upper()
+    print(encabezado + " | TOTAL")
+
+    for i in range(6):
+        suma_fila = 0
+        print(cat_tramites[i], end="")
+
+        for j in range(ne):
+            print(" | " + str(matriz[i][j]), end="")
+            suma_fila += matriz[i][j]
+
+        print(" | " + str(suma_fila))
+
+    print("TOTAL GENERAL:", n)
+

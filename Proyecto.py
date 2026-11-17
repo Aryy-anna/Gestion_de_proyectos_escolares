@@ -623,3 +623,172 @@ def main():
         print("6. Actualizar estado de una solicitud")
         print("0. Salir")
         opcion = leer_entero("Seleccione una opcion: ")
+
+        # ---------------------------------------------- 1. REGISTRAR
+        if opcion == 1:
+            if n >= MAX_SOLICITUDES or ultimo_numero >= 999:
+                print("[!] Se alcanzo el maximo de solicitudes.")
+            else:
+                print("")
+                print("================================================")
+                print("        REGISTRO DE SOLICITUD ESCOLAR ")
+                print("================================================")
+                print("Escriba X en los campos iniciales para cancelar.")
+
+                # Condicion (primera pregunta)
+                print("")
+                print("CONDICION")
+                for i in range(2):
+                    print(str(i + 1) + ". " + cat_condiciones[i])
+
+                while True:
+                    texto = input("Seleccione condicion (1-2): ").strip()
+                    if texto.upper() == "X" or texto == "1" or texto == "2":
+                        break
+                    print("[!] Ingrese 1, 2 o X para cancelar.")
+                if texto.upper() == "X":
+                    print("[!] Registro cancelado.")
+                    continue
+                condicion = cat_condiciones[int(texto) - 1]
+
+                # DNI
+                while True:
+                    dni = input("DNI del solicitante (8 digitos): ").strip()
+                    if dni.upper() != "X" and not validar_dni(dni):
+                        print("[!] DNI invalido. Debe tener 8 digitos.")
+                    if dni.upper() == "X" or validar_dni(dni):
+                        break
+                if dni.upper() == "X":
+                    print("[!] Registro cancelado.")
+                    continue
+
+                # Apellidos
+                while True:
+                    apellido = input("Apellidos del solicitante: ").strip()
+                    if apellido.upper() != "X" and not validar_nombre(apellido):
+                        print("[!] Ingrese los apellidos (sin numeros).")
+                    if apellido.upper() == "X" or validar_nombre(apellido):
+                        break
+                if apellido.upper() == "X":
+                    print("[!] Registro cancelado.")
+                    continue
+
+                # Nombres
+                while True:
+                    nombre = input("Nombres del solicitante: ").strip()
+                    if nombre.upper() != "X" and not validar_nombre(nombre):
+                        print("[!] Ingrese los nombres (sin numeros).")
+                    if nombre.upper() == "X" or validar_nombre(nombre):
+                        break
+                if nombre.upper() == "X":
+                    print("[!] Registro cancelado.")
+                    continue
+
+                # Telefono
+                while True:
+                    tel = input("Celular de contacto (9 digitos): ").strip()
+                    if tel.upper() != "X" and not validar_telefono(tel):
+                        print("[!] Debe tener 9 digitos y empezar con 9.")
+                    if tel.upper() == "X" or validar_telefono(tel):
+                        break
+                if tel.upper() == "X":
+                    print("[!] Registro cancelado.")
+                    continue
+
+                if condicion == "ESTUDIANTE":
+                    # Nivel (solo estudiantes)
+                    print("")
+                    print("NIVELES EDUCATIVOS")
+                    for i in range(3):
+                        print(str(i + 1) + ". " + cat_niveles[i])
+
+                    while True:
+                        criterio = leer_entero("Seleccione nivel (1-3): ")
+                        if 1 <= criterio <= 3:
+                            break
+                    nivel = cat_niveles[criterio - 1]
+
+                    # El estudiante solo indica el grado que cursa
+                    if nivel == "INICIAL":
+                        grado = str(leer_rango("Edad del aula (3, 4 o 5): ",
+                                               3, 5))
+                    elif nivel == "PRIMARIA":
+                        grado = str(leer_rango("Grado que cursa (1-6): ",
+                                               1, 6))
+                    else:
+                        grado = str(leer_rango("Grado que cursa (1-5): ",
+                                               1, 5))
+                else:
+                    # El egresado no tiene nivel: pasa directo a su edad
+                    nivel = "-"
+                    grado = str(leer_rango("Edad: ", 10, 99))
+
+                # Tramite (motivo): cada condicion ve solo los que le sirven
+                if condicion == "ESTUDIANTE":
+                    permitidos = TRAMITES_ESTUDIANTE
+                else:
+                    permitidos = TRAMITES_EGRESADO
+
+                print("")
+                print("TIPOS DE TRAMITE")
+                for i in range(len(permitidos)):
+                    print(str(i + 1) + ". " + cat_tramites[permitidos[i] - 1])
+
+                while True:
+                    eleccion = leer_entero("Seleccione tramite (1-"
+                                           + str(len(permitidos)) + "): ")
+                    if 1 <= eleccion <= len(permitidos):
+                        break
+                # 'motivo' es la posicion del tramite en el catalogo completo
+                # (es el numero que se guarda en Tramite.txt)
+                motivo = permitidos[eleccion - 1]
+                tramite = cat_tramites[motivo - 1]
+
+                # Folios (cantidad de hojas)
+                while True:
+                    folio = leer_entero("Folios (cantidad de hojas): ")
+                    if folio >= 1:
+                        break
+                    print("[!] Debe tener al menos 1 folio.")
+
+                # Fecha y hora las toma el sistema; el responsable sale del acceso
+                fecha = obtener_fecha_sistema()
+                hora = obtener_hora_sistema()
+                ultimo_numero += 1
+                codigo = generar_codigo(ultimo_numero)
+
+                # Guardado (posicion n = siguiente libre; luego n += 1)
+                codigos[n] = codigo
+                fechas[n] = fecha
+                horas[n] = hora
+                dnis[n] = dni
+                apellidos[n] = limpiar_texto(apellido)
+                nombres[n] = limpiar_texto(nombre)
+                telefonos[n] = tel
+                niveles[n] = nivel
+                grados[n] = grado
+                condiciones[n] = condicion
+                tramites[n] = tramite
+                folios[n] = folio
+                estados[n] = "Registrado"
+                notas[n] = "Solicitud registrada"
+                responsables[n] = responsable_actual
+                n += 1
+
+                # Archivos Tramite.txt y Seguimiento.txt
+                ok1 = guardar_tramite(ARCHIVO_TRAMITE, ultimo_numero, fecha,
+                                      hora, motivo, dni, apellidos[n - 1],
+                                      nombres[n - 1], folio)
+                seguimiento.append((ultimo_numero, "Registrado", fecha, hora,
+                                    notas[n - 1]))
+                ok2 = guardar_seguimiento(ARCHIVO_SEGUIMIENTO, ultimo_numero,
+                                          "Registrado", fecha, hora,
+                                          notas[n - 1])
+
+                print("")
+                print("[OK] Solicitud registrada correctamente.")
+                print("Codigo asignado:", codigo)
+                print("Fecha y hora de registro:", formatear_fecha(fecha), hora)
+                print("Estado inicial: Registrado")
+                if not (ok1 and ok2):
+                    print("[!] No se pudo escribir en los archivos .txt.")

@@ -240,3 +240,75 @@ def ingresar_acceso(cat_accesos):
 
     return posicion
 
+
+def estado_permitido(actual, nuevo):
+    """Cambios de estado permitidos:
+    Registrado  -> En revision
+    En revision -> Observado | Aprobado | Rechazado
+    Observado   -> En revision | Aprobado | Rechazado
+    Aprobado y Rechazado son estados finales."""
+    permitido = False
+
+    if actual == "Registrado":
+        permitido = (nuevo == "En revision")
+    if actual == "En revision":
+        permitido = (nuevo == "Observado" or nuevo == "Aprobado"
+                     or nuevo == "Rechazado")
+    if actual == "Observado":
+        permitido = (nuevo == "En revision" or nuevo == "Aprobado"
+                     or nuevo == "Rechazado")
+
+    return permitido
+
+
+def buscar_posicion_codigo(codigos, n, codigo):
+    """Busqueda lineal exacta por codigo (SOL-001) o por numero (1).
+    Devuelve la posicion o -1."""
+    codigo = codigo.strip().upper()
+    if solo_digitos(codigo):
+        codigo = generar_codigo(int(codigo))
+
+    posicion = -1
+    for i in range(n):
+        if codigos[i] == codigo:
+            posicion = i
+    return posicion
+
+
+def actualizar_estado(pos, estados, notas, cat_estados):
+    """Cambia el estado de la solicitud en 'pos' respetando el flujo y pide
+    el motivo. Devuelve (nuevo_estado, motivo) o ("", "") si no hubo cambio."""
+    actual = estados[pos]
+    print("Estado actual:", actual)
+
+    hay_opciones = False
+    print("ESTADOS DISPONIBLES")
+    for j in range(len(cat_estados)):
+        if estado_permitido(actual, cat_estados[j]):
+            print(str(j + 1) + ". " + cat_estados[j])
+            hay_opciones = True
+
+    if not hay_opciones:
+        print("La solicitud ya esta en un estado final (" + actual + ").")
+        return "", ""
+
+    while True:
+        eleccion = leer_entero("Seleccione nuevo estado (0 = cancelar): ")
+        if eleccion == 0:
+            print("[!] Cambio cancelado.")
+            return "", ""
+        if 1 <= eleccion <= len(cat_estados) and estado_permitido(
+                actual, cat_estados[eleccion - 1]):
+            break
+        print("[!] Cambio no permitido desde el estado " + actual + ".")
+
+    nuevo = cat_estados[eleccion - 1]
+    motivo = limpiar_texto(leer_no_vacio("Motivo del cambio a "
+                                         + nuevo + ": "))
+    if motivo == "":
+        motivo = "Sin motivo"
+
+    estados[pos] = nuevo
+    notas[pos] = motivo
+    return nuevo, motivo
+

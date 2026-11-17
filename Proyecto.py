@@ -104,3 +104,41 @@ def numero_de_codigo(codigo):
     """'SOL-007' -> 7."""
     return int(codigo[4:])
 
+# -------------------------------------------------------------- VALIDACION
+def solo_digitos(texto):
+    # Se compara caracter por caracter; evita que str.isdigit() acepte
+    # simbolos como "²".
+    if len(texto) == 0:
+        return False
+    for c in texto:
+        if c < "0" or c > "9":
+            return False
+    return True
+
+
+def validar_dni(dni):
+    return len(dni) == 8 and solo_digitos(dni)
+
+
+def validar_telefono(tel):
+    return len(tel) == 9 and solo_digitos(tel) and tel[0] == "9"
+
+
+def contar_palabras(texto):
+    cantidad = 0
+    anterior = " "
+    for c in texto:
+        if c != " " and anterior == " ":
+            cantidad += 1
+        anterior = c
+    return cantidad
+
+
+def validar_nombre(texto):
+    """Apellidos o nombres: al menos 2 caracteres y sin digitos ni '|'."""
+    if len(texto.strip()) < 2:
+        return False
+    for c in texto:
+        if ("0" <= c <= "9") or c == "|":
+            return False
+    return True

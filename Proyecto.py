@@ -859,3 +859,29 @@ def main():
                                       apellidos, nombres, telefonos, niveles,
                                       grados, condiciones, tramites, folios,
                                       estados, notas, responsables)
+                    
+        # ------------------------------------------------ 4. REPORTE
+        elif opcion == 4:
+            reporte_documentos(tramites, estados, n, cat_tramites,
+                                   cat_estados)
+
+        # ------------------------------------------------ 5. LISTA / EXPEDIENTE
+        elif opcion == 5:
+            if n == 0:
+                print("No hay solicitudes registradas.")
+            else:
+                listar_tramites(codigos, fechas, horas, tramites, apellidos,
+                                nombres, estados, n)
+
+                while True:
+                    texto = input("Codigo o numero del expediente a abrir "
+                                  "(0 = volver): ").strip()
+                    if texto == "0" or texto == "":
+                        break
+                    pos = buscar_posicion_codigo(codigos, n, texto)
+                    if pos == -1:
+                        print("[!] No existe un expediente con ese codigo.")
+                    else:
+                        mostrar_expediente(pos, codigos, fechas, horas, dnis,
+                                           apellidos, nombres, tramites,
+                                           folios, estados, notas, seguimiento)

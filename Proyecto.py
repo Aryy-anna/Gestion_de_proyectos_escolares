@@ -87,3 +87,20 @@ def txt_a_fecha(texto):
         if not solo_digitos(p):
             return ""
     return "20" + partes[2].zfill(2) + partes[1].zfill(2) + partes[0].zfill(2)
+
+
+def generar_codigo(n):
+    # n < 10 -> "00n" ; n < 100 -> "0nn" ; si no -> "nnn"
+    if n < 10:
+        numero = "00" + str(n)
+    elif n < 100:
+        numero = "0" + str(n)
+    else:
+        numero = str(n)
+    return "SOL-" + numero
+
+
+def numero_de_codigo(codigo):
+    """'SOL-007' -> 7."""
+    return int(codigo[4:])
+

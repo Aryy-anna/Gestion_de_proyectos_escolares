@@ -56,3 +56,34 @@ def limpiar_texto(texto):
     """Quita el separador '|' para no romper el formato de los .txt."""
     return texto.replace("|", "/").strip()
 
+
+# --------------------------------------------------------- FECHA Y CODIGOS
+def obtener_fecha_sistema():
+    """Fecha actual del sistema en formato AAAAMMDD (no la escribe el usuario)."""
+    return date.today().strftime("%Y%m%d")
+
+
+def obtener_hora_sistema():
+    """Hora actual del sistema en formato HH:MM."""
+    return datetime.now().strftime("%H:%M")
+
+
+def formatear_fecha(fecha):
+    """Convierte AAAAMMDD en DD/MM/AAAA."""
+    return fecha[6:8] + "/" + fecha[4:6] + "/" + fecha[0:4]
+
+
+def fecha_a_txt(fecha):
+    """Convierte AAAAMMDD en el formato de los archivos: D-M-AA (4-11-26)."""
+    return str(int(fecha[6:8])) + "-" + str(int(fecha[4:6])) + "-" + fecha[2:4]
+
+
+def txt_a_fecha(texto):
+    """Convierte D-M-AA en AAAAMMDD. Devuelve "" si el formato es invalido."""
+    partes = texto.strip().split("-")
+    if len(partes) != 3:
+        return ""
+    for p in partes:
+        if not solo_digitos(p):
+            return ""
+    return "20" + partes[2].zfill(2) + partes[1].zfill(2) + partes[0].zfill(2)

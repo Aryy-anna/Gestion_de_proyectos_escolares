@@ -885,3 +885,37 @@ def main():
                         mostrar_expediente(pos, codigos, fechas, horas, dnis,
                                            apellidos, nombres, tramites,
                                            folios, estados, notas, seguimiento)
+
+        # ------------------------------------------------ 6. ESTADO
+        elif opcion == 6:
+            if n == 0:
+                print("No hay solicitudes registradas.")
+            else:
+                print("")
+                print("================================================")
+                print("              ACTUALIZAR ESTADO")
+                print("================================================")
+                codigo = input("Codigo de la solicitud (ej. SOL-001 o 1): ")
+                pos = buscar_posicion_codigo(codigos, n, codigo)
+
+                if pos == -1:
+                    print("[!] No existe una solicitud con ese codigo.")
+                else:
+                    nuevo, motivo = actualizar_estado(pos, estados, notas,
+                                                      cat_estados)
+                    if nuevo != "":
+                        fecha = obtener_fecha_sistema()
+                        hora = obtener_hora_sistema()
+                        numero = numero_de_codigo(codigos[pos])
+                        seguimiento.append((numero, nuevo, fecha, hora,
+                                            motivo))
+                        ok = guardar_seguimiento(ARCHIVO_SEGUIMIENTO, numero,
+                                                 nuevo, fecha, hora, motivo)
+                        print("[OK] Estado actualizado.")
+                        if not ok:
+                            print("[!] No se pudo escribir Seguimiento.txt.")
+                        mostrar_solicitud(pos, codigos, fechas, horas, dnis,
+                                          apellidos, nombres, telefonos,
+                                          niveles, grados, condiciones,
+                                          tramites, folios, estados, notas,
+                                          responsables)

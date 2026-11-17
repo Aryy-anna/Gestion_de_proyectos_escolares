@@ -142,3 +142,79 @@ def validar_nombre(texto):
         if ("0" <= c <= "9") or c == "|":
             return False
     return True
+
+# ------------------------------------------------------------ ARCHIVOS .TXT
+def guardar_tramite(ruta, numero, fecha, hora, motivo, dni, apellidos,
+                    nombres, folio):
+    """Agrega una linea a Tramite.txt:
+    numero|fecha|hora|motivo|dni|apellidos|nombres|folio"""
+    linea = "|".join([str(numero), fecha_a_txt(fecha), hora, str(motivo),
+                      dni, limpiar_texto(apellidos), limpiar_texto(nombres),
+                      str(folio)])
+    try:
+        with open(ruta, "a", encoding="utf-8") as f:
+            f.write(linea + "\n")
+        return True
+    except OSError:
+        return False
+
+
+def guardar_seguimiento(ruta, numero, fase, fecha, hora, motivo):
+    """Agrega una linea a Seguimiento.txt: numero|fase|fecha|hora|motivo"""
+    linea = "|".join([str(numero), fase, fecha_a_txt(fecha), hora,
+                      limpiar_texto(motivo)])
+    try:
+        with open(ruta, "a", encoding="utf-8") as f:
+            f.write(linea + "\n")
+        return True
+    except OSError:
+        return False
+
+
+def cargar_tramites(ruta):
+    """Lee Tramite.txt. Devuelve una lista de tuplas
+    (numero, fecha AAAAMMDD, hora, motivo, dni, apellidos, nombres, folio).
+    Las lineas con formato invalido se ignoran."""
+    registros = []
+    if not os.path.exists(ruta):
+        return registros
+    with open(ruta, "r", encoding="utf-8") as f:
+        for linea in f:
+            c = linea.rstrip("\n").split("|")
+            if len(c) != 8:
+                continue
+            fecha = txt_a_fecha(c[1])
+            if (not solo_digitos(c[0]) or fecha == ""
+                    or not solo_digitos(c[3]) or not solo_digitos(c[7])):
+                continue
+            registros.append((int(c[0]), fecha, c[2], int(c[3]), c[4], c[5],
+                              c[6], int(c[7])))
+    return registros
+
+
+def cargar_seguimiento(ruta):
+    """Lee Seguimiento.txt. Devuelve una lista de tuplas
+    (numero, fase, fecha AAAAMMDD, hora, motivo)."""
+    eventos = []
+    if not os.path.exists(ruta):
+        return eventos
+    with open(ruta, "r", encoding="utf-8") as f:
+        for linea in f:
+            c = linea.rstrip("\n").split("|")
+            if len(c) < 4 or not solo_digitos(c[0]):
+                continue
+            fecha = txt_a_fecha(c[2])
+            if fecha == "":
+                continue
+            motivo = c[4] if len(c) > 4 else ""
+            eventos.append((int(c[0]), c[1].strip(), fecha, c[3], motivo))
+    return eventos
+
+
+def fase_del_catalogo(fase):
+    """Devuelve la fase escrita como en CAT_ESTADOS (sin distinguir
+    mayusculas) o la misma fase si no esta en el catalogo."""
+    for e in CAT_ESTADOS:
+        if e.upper() == fase.upper():
+            return e
+    return fase

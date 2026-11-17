@@ -218,3 +218,25 @@ def fase_del_catalogo(fase):
         if e.upper() == fase.upper():
             return e
     return fase
+
+# ------------------------------------------------------- ACCESO Y ESTADOS
+def ingresar_acceso(cat_accesos):
+    """Pide el codigo de acceso (hasta 3 intentos).
+    Devuelve la posicion del codigo en el catalogo o -1 si se denegó."""
+    intentos = 0
+    posicion = -1
+
+    while intentos < MAX_INTENTOS and posicion == -1:
+        codigo = input("Codigo de acceso: ").strip().upper()
+
+        for i in range(len(cat_accesos)):
+            if cat_accesos[i] == codigo:
+                posicion = i
+
+        if posicion == -1:
+            intentos += 1
+            print("[!] Codigo incorrecto. Intentos restantes:",
+                  MAX_INTENTOS - intentos)
+
+    return posicion
+

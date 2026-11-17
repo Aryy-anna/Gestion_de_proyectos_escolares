@@ -817,3 +817,45 @@ def main():
                                       dnis, apellidos, nombres, telefonos,
                                       niveles, grados, condiciones, tramites,
                                       folios, estados, notas, responsables)
+
+        # ------------------------------------------------ 3. ORDENAR
+        elif opcion == 3:
+            if n == 0:
+                print("No hay solicitudes para ordenar.")
+            else:
+                print("")
+                print("================================================")
+                print("         ORDENAMIENTO DE SOLICITUDES")
+                print("================================================")
+                print("1. Codigo")
+                print("2. Fecha")
+                print("3. Nombre del solicitante")
+                print("4. Nivel educativo")
+                print("5. Tipo de tramite")
+
+                while True:
+                    criterio = leer_entero("Seleccione criterio (1-5): ")
+                    if 1 <= criterio <= 5:
+                        break
+
+                armar_claves(claves, n, criterio, codigos, fechas, horas,
+                             apellidos, nombres, niveles, tramites)
+
+                print("1. Ascendente")
+                print("2. Descendente")
+
+                while True:
+                    direccion = leer_entero("Seleccione direccion: ")
+                    if direccion == 1 or direccion == 2:
+                        break
+
+                ascendente = (direccion == 1)
+
+                ordenar_burbuja(orden, claves, n, ascendente)
+                print("")
+
+                for i in range(n):
+                    mostrar_solicitud(orden[i], codigos, fechas, horas, dnis,
+                                      apellidos, nombres, telefonos, niveles,
+                                      grados, condiciones, tramites, folios,
+                                      estados, notas, responsables)

@@ -792,3 +792,28 @@ def main():
                 print("Estado inicial: Registrado")
                 if not (ok1 and ok2):
                     print("[!] No se pudo escribir en los archivos .txt.")
+
+
+        # ------------------------------------------------ 2. BUSCAR
+        elif opcion == 2:
+            if n == 0:
+                print("No hay solicitudes registradas.")
+            else:
+                print("")
+                print("================================================")
+                print("            BUSQUEDA DE SOLICITUDES")
+                print("================================================")
+                print("Ingrese codigo, DNI, nombre, grado, condicion o tramite:")
+                buscado = input()
+
+                encontrados, total, comparaciones = busqueda_lineal(
+                    codigos, dnis, apellidos, nombres, grados, condiciones,
+                    tramites, n, buscado)
+
+                print("Coincidencias encontradas:", total)
+
+                for i in range(total):
+                    mostrar_solicitud(encontrados[i], codigos, fechas, horas,
+                                      dnis, apellidos, nombres, telefonos,
+                                      niveles, grados, condiciones, tramites,
+                                      folios, estados, notas, responsables)

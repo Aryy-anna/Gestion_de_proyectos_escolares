@@ -521,3 +521,105 @@ def reporte_documentos(tramites, estados, n, cat_tramites, cat_estados):
 
     print("TOTAL GENERAL:", n)
 
+
+# ------------------------------------------------------------- PROGRAMA
+def main():
+    # Arreglos paralelos (Dimension ...[200])
+    codigos = [""] * MAX_SOLICITUDES
+    fechas = [""] * MAX_SOLICITUDES
+    horas = [""] * MAX_SOLICITUDES
+    dnis = [""] * MAX_SOLICITUDES
+    apellidos = [""] * MAX_SOLICITUDES
+    nombres = [""] * MAX_SOLICITUDES
+    telefonos = [""] * MAX_SOLICITUDES
+    niveles = [""] * MAX_SOLICITUDES
+    grados = [""] * MAX_SOLICITUDES
+    condiciones = [""] * MAX_SOLICITUDES
+    tramites = [""] * MAX_SOLICITUDES
+    folios = [0] * MAX_SOLICITUDES
+    estados = [""] * MAX_SOLICITUDES
+    notas = [""] * MAX_SOLICITUDES
+    responsables = [""] * MAX_SOLICITUDES
+    claves = [""] * MAX_SOLICITUDES
+    orden = [0] * MAX_SOLICITUDES
+
+    # Historial de seguimiento: (numero, fase, fecha, hora, motivo)
+    seguimiento = []
+
+    cat_niveles = ["INICIAL", "PRIMARIA", "SECUNDARIA"]
+    cat_condiciones = ["ESTUDIANTE", "EGRESADO"]
+    cat_tramites = [
+        "CONSTANCIA DE ESTUDIOS",
+        "CERTIFICADO DE ESTUDIOS",
+        "MATRICULA O TRASLADO",
+        "JUSTIFICACION DE INASISTENCIA",
+        "ACTUALIZACION DE DATOS",
+        "OTROS",
+    ]
+    cat_estados = CAT_ESTADOS
+    # Personal autorizado: el codigo de acceso identifica al responsable
+    cat_accesos = ["SEC-01", "SEC-02", "DIR-01"]
+    cat_personal = ["Mery Elizabeth Herrera Sanchez",
+                    "Mailita Anali Julca Quezada",
+                    "Luis Rafael Juarez Martinez"]
+
+    n = 0
+    ultimo_numero = 0
+
+    # ---- Carga de los archivos (si existen de una ejecucion anterior)
+    # Tramite.txt no guarda telefono, nivel, grado, condicion ni
+    # responsable: esos campos quedan en "-" para lo ya guardado.
+    seguimiento = cargar_seguimiento(ARCHIVO_SEGUIMIENTO)
+    for r in cargar_tramites(ARCHIVO_TRAMITE):
+        if n >= MAX_SOLICITUDES:
+            break
+        codigos[n] = generar_codigo(r[0])
+        fechas[n] = r[1]
+        horas[n] = r[2]
+        tramites[n] = cat_tramites[r[3] - 1] if 1 <= r[3] <= 6 \
+            else cat_tramites[5]
+        dnis[n] = r[4]
+        apellidos[n] = r[5]
+        nombres[n] = r[6]
+        folios[n] = r[7]
+        telefonos[n] = niveles[n] = grados[n] = "-"
+        condiciones[n] = responsables[n] = "-"
+        estados[n] = "Registrado"
+        notas[n] = ""
+        for e in seguimiento:
+            if e[0] == r[0]:
+                estados[n] = fase_del_catalogo(e[1])
+                notas[n] = e[4]
+        if r[0] > ultimo_numero:
+            ultimo_numero = r[0]
+        n += 1
+
+    print("================================================")
+    print(" SISTEMA DE GESTION DE SOLICITUDES ESCOLARES")
+    print(" I.E. N. 81770 MARIA INMACULADA CONCEPCION")
+    print("================================================")
+
+    persona = ingresar_acceso(cat_accesos)
+    if persona == -1:
+        print("Acceso denegado. Cerrando el sistema.")
+        return
+
+    responsable_actual = cat_personal[persona] + " (" + cat_accesos[persona] + ")"
+    print("Bienvenido(a): " + responsable_actual)
+    if n > 0:
+        print("Se cargaron " + str(n) + " solicitud(es) de Tramite.txt.")
+
+    while True:
+        print("")
+        print("================================================")
+        print(" SISTEMA DE GESTION DE SOLICITUDES ESCOLARES")
+        print(" Personal: " + responsable_actual)
+        print("================================================")
+        print("1. Registrar solicitud escolar")
+        print("2. Buscar solicitud")
+        print("3. Ordenar solicitudes")
+        print("4. Reporte de documentos")
+        print("5. Lista de tramites")
+        print("6. Actualizar estado de una solicitud")
+        print("0. Salir")
+        opcion = leer_entero("Seleccione una opcion: ")

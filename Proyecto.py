@@ -312,3 +312,109 @@ def actualizar_estado(pos, estados, notas, cat_estados):
     notas[pos] = motivo
     return nuevo, motivo
 
+
+# ---------------------------------------------------- BUSQUEDA Y ORDEN
+def contiene_texto(texto, buscado):
+    """Devuelve True si 'buscado' aparece dentro de 'texto' (sin distinguir
+    mayusculas). Una busqueda vacia coincide con todo."""
+    texto = texto.upper()
+    buscado = buscado.upper()
+    lb = len(buscado)
+
+    if lb == 0:
+        return True
+    if lb <= len(texto):
+        for i in range(len(texto) - lb + 1):
+            if texto[i:i + lb] == buscado:
+                return True
+    return False
+
+
+def busqueda_lineal(codigos, dnis, apellidos, nombres, grados, condiciones,
+                    tramites, n, buscado):
+    """Devuelve (encontrados, total, comparaciones)."""
+    encontrados = [0] * MAX_SOLICITUDES
+    total = 0
+    comparaciones = 0
+
+    for i in range(n):
+        coincide = False
+        k = 1
+
+        while not coincide and k <= 7:
+            if k == 1:
+                campo = codigos[i]
+            elif k == 2:
+                campo = dnis[i]
+            elif k == 3:
+                campo = apellidos[i]
+            elif k == 4:
+                campo = nombres[i]
+            elif k == 5:
+                campo = grados[i]
+            elif k == 6:
+                campo = condiciones[i]
+            else:
+                campo = tramites[i]
+
+            comparaciones += 1
+            coincide = contiene_texto(campo, buscado)
+            k += 1
+
+        if coincide:
+            encontrados[total] = i
+            total += 1
+
+    return encontrados, total, comparaciones
+
+
+def armar_claves(claves, n, criterio, codigos, fechas, horas, apellidos,
+                 nombres, niveles, tramites):
+    for i in range(n):
+        if criterio == 2:
+            claves[i] = fechas[i] + horas[i]
+        elif criterio == 3:
+            claves[i] = apellidos[i].upper() + " " + nombres[i].upper()
+        elif criterio == 4:
+            claves[i] = niveles[i]
+        elif criterio == 5:
+            claves[i] = tramites[i]
+        else:
+            claves[i] = codigos[i]
+
+
+def todas_las_posiciones(orden, n):
+    for i in range(n):
+        orden[i] = i
+
+
+def ordenar_burbuja(orden, claves, n, ascendente):
+    """Burbuja con bandera de parada anticipada.
+    Devuelve (comparaciones, intercambios)."""
+    todas_las_posiciones(orden, n)
+
+    comparaciones = 0
+    intercambios = 0
+    i = 1
+    hubo_intercambio = True
+
+    while i <= n - 1 and hubo_intercambio:
+        hubo_intercambio = False
+
+        for j in range(n - i):
+            comparaciones += 1
+
+            if ascendente:
+                desordenado = claves[orden[j]] > claves[orden[j + 1]]
+            else:
+                desordenado = claves[orden[j]] < claves[orden[j + 1]]
+
+            if desordenado:
+                orden[j], orden[j + 1] = orden[j + 1], orden[j]
+                intercambios += 1
+                hubo_intercambio = True
+
+        i += 1
+
+    return comparaciones, intercambios
+

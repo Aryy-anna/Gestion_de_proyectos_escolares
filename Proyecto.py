@@ -919,3 +919,15 @@ def main():
                                           niveles, grados, condiciones,
                                           tramites, folios, estados, notas,
                                           responsables)
+                        
+        # ------------------------------------------------ 0. SALIR
+        elif opcion == 0:
+            print("Saliendo del sistema de gestion escolar...")
+            break
+
+        else:
+            print("[!] Opcion no valida.")
+
+
+if __name__ == "__main__":
+    main()

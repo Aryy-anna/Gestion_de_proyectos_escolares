@@ -1,0 +1,61 @@
+1|Registrado|20-11-26|23:16|Solicitud registrada|SEC-01
+2|Registrado|20-11-26|23:20|Solicitud registrada|SEC-01
+3|Registrado|20-11-26|23:22|Solicitud registrada|SEC-01
+4|Registrado|20-11-26|23:24|Solicitud registrada|SEC-01
+5|Registrado|20-11-26|23:25|Solicitud registrada|SEC-01
+6|Registrado|20-11-26|23:27|Solicitud registrada|SEC-01
+7|Registrado|20-11-26|23:30|Solicitud registrada|SEC-01
+8|Registrado|20-11-26|23:33|Solicitud registrada|SEC-02
+9|Registrado|20-11-26|23:34|Solicitud registrada|SEC-02
+10|Registrado|20-11-26|23:36|Solicitud registrada|SEC-02
+11|Registrado|20-11-26|23:37|Solicitud registrada|SEC-02
+12|Registrado|20-11-26|23:39|Solicitud registrada|SEC-02
+13|Registrado|20-11-26|23:40|Solicitud registrada|SEC-02
+14|Registrado|20-11-26|23:42|Solicitud registrada|DIR-01
+15|Registrado|20-11-26|23:44|Solicitud registrada|DIR-01
+16|Registrado|20-11-26|23:45|Solicitud registrada|DIR-01
+17|Registrado|20-11-26|23:46|Solicitud registrada|DIR-01
+18|Registrado|20-11-26|23:48|Solicitud registrada|DIR-01
+19|Registrado|20-11-26|23:50|Solicitud registrada|DIR-01
+20|Registrado|20-11-26|23:52|Solicitud registrada|SEC-02
+1|En revision|21-11-26|00:00|Documentos completos|SEC-01
+2|En revision|21-11-26|00:01|Documentos completos|SEC-01
+3|En revision|21-11-26|00:01|Documentos completos|SEC-01
+4|En revision|21-11-26|00:02|Documentos completos|SEC-01
+5|En revision|21-11-26|00:02|Documentos completos|SEC-01
+7|En revision|21-11-26|00:03|Documentos completos|SEC-01
+8|En revision|21-11-26|00:04|Documentos completos|SEC-02
+9|En revision|21-11-26|00:06|Documentos completos|SEC-02
+10|En revision|21-11-26|00:06|Documentos completos|SEC-02
+11|En revision|21-11-26|00:06|Documentos completos|SEC-02
+13|En revision|21-11-26|00:07|Documentos completos|SEC-02
+14|En revision|21-11-26|00:08|Documentos completos|DIR-01
+15|En revision|21-11-26|00:08|Documentos completos|DIR-01
+16|En revision|21-11-26|00:08|Documentos completos|DIR-01
+17|En revision|21-11-26|00:09|Documentos completos|DIR-01
+18|En revision|21-11-26|00:09|Documentos completos|DIR-01
+19|En revision|21-11-26|00:09|Documentos completos|DIR-01
+1|Observado|21-11-26|00:23|Falta copia del DNI|SEC-01
+2|Observado|21-11-26|00:28|Falta de constancia de pago|SEC-01
+3|Observado|21-11-26|00:28|Foto del certtificado ilegible|SEC-01
+4|Observado|21-11-26|00:29|Falta firma del apoderado|SEC-01
+7|Observado|21-11-26|00:34|Sin observaciones|SEC-01
+8|Observado|21-11-26|00:36|Sin observaciones|SEC-02
+9|Observado|21-11-26|00:38|Datos incompletos|SEC-02
+10|Observado|21-11-26|00:39|Falta constancia de pago|SEC-02
+11|Observado|21-11-26|00:39|Sin observaciones|SEC-02
+1|Aprobado|21-11-26|00:46|Presento copia del DNI|DIR-01
+2|Aprobado|21-11-26|00:47|Presento la constancia de pago|DIR-01
+3|Rechazado|21-11-26|00:47|Documento ilegible, no se subsano|DIR-01
+7|Aprobado|21-11-26|00:51|Cumple con todos los requisitos|DIR-01
+8|Aprobado|21-11-26|00:51|Cumple con todos los requisitos|DIR-01
+10|Aprobado|21-11-26|00:54|Presento la constancia de pago|DIR-01
+11|Aprobado|21-11-26|00:55|Cumple con todos los requisitos|DIR-01
+13|Observado|21-11-26|00:57|Falta copia del DNI|SEC-02
+14|Observado|21-11-26|00:58|Sin observaciones|DIR-01
+14|Aprobado|21-11-26|00:59|Cumple con todos los requisitos|DIR-01
+16|Observado|21-11-26|01:02|Falta constancia de pagos|DIR-01
+16|Rechazado|21-11-26|01:02|No presento la constancia de pagos|DIR-01
+17|Observado|21-11-26|01:03|Falta copia de DNI|DIR-01
+19|Observado|21-11-26|01:04|Sin observaciones|DIR-01
+19|Aprobado|21-11-26|01:05|Cumple con todos los requisitos|DIR-01
